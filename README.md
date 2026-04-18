@@ -4,7 +4,7 @@
 
 ## How It Works
 
-Traditional sportsbooks are principal-agent — the house takes the other side of every bet. FöreTrade is peer-to-peer: users trade outcome shares with each other, priced continuously by a constant-product AMM. The platform just earns a 2% fee on winnings.
+Traditional sportsbooks are principal-agent — the house takes the other side of every bet. Tei is peer-to-peer: users trade outcome shares with each other, priced continuously by a constant-product AMM. The platform just earns a 2% fee on winnings.
 
 **Core loop:**
 1. Match goes live → market opens automatically

@@ -5,6 +5,9 @@ package_manager = "yarn"
 resolution = true
 skip-lint = false
 
+[test]
+startup_wait = 20000
+
 [programs.localnet]
 tei1 = "GFzfEUfDjfC1jBg2ayrMryJFnxkb41FCabrWQimpPotV"
 

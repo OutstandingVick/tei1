@@ -3,14 +3,17 @@ import { Program } from "@coral-xyz/anchor";
 import { Tei1 } from "../target/types/tei1";
 import {
   createMint,
-  createAccount,
+  getAssociatedTokenAddressSync,
+  getOrCreateAssociatedTokenAccount,
   mintTo,
   getAccount,
 } from "@solana/spl-token";
 import { assert } from "chai";
 
 describe("tei1", () => {
-  const provider = anchor.AnchorProvider.env();
+  const provider = process.env.ANCHOR_PROVIDER_URL
+    ? anchor.AnchorProvider.env()
+    : anchor.AnchorProvider.local();
   anchor.setProvider(provider);
 
   const program = anchor.workspace.Tei1 as Program<Tei1>;
@@ -44,19 +47,29 @@ describe("tei1", () => {
     );
 
     // Create token accounts
-    authorityUsdc = await createAccount(
-      provider.connection,
-      (authority.payer as anchor.web3.Keypair),
-      usdcMint,
-      authority.publicKey
-    );
+    authorityUsdc = (
+      await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        authority.payer as anchor.web3.Keypair,
+        usdcMint,
+        authority.publicKey
+      )
+    ).address;
 
-    treasuryUsdc = await createAccount(
-      provider.connection,
-      (authority.payer as anchor.web3.Keypair),
-      usdcMint,
-      authority.publicKey
-    );
+    treasuryUsdc = (
+      await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        authority.payer as anchor.web3.Keypair,
+        usdcMint,
+        authority.publicKey
+      )
+    ).address;
+
+    // Create token accounts
+    /*
+     * Use associated token accounts in tests to avoid owner validation
+     * edge cases in newer SPL helper versions.
+     */
 
     // Mint 10,000 USDC to authority
     await mintTo(
@@ -102,11 +115,7 @@ describe("tei1", () => {
     const kickoff = now + 3600; // 1 hour from now
     const closeTime = kickoff + 6300; // 105 minutes after kickoff
 
-    // Vault PDA — derived from market
-    [vaultPda] = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("vault"), marketPda.toBytes()],
-      program.programId
-    );
+    vaultPda = getAssociatedTokenAddressSync(usdcMint, marketPda, true);
 
     await program.methods
       .createMarket(
@@ -137,6 +146,14 @@ describe("tei1", () => {
     const platform = await program.account.platform.fetch(platformPda);
     assert.equal(platform.totalMarkets.toNumber(), 1);
 
+    await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      authority.payer as anchor.web3.Keypair,
+      usdcMint,
+      marketPda,
+      true
+    );
+
     console.log("✅ Market created:", market.title);
   });
 
@@ -164,12 +181,14 @@ describe("tei1", () => {
 
   it("User buys YES shares (Arsenal wins)", async () => {
     // Give user USDC first
-    const userUsdc = await createAccount(
-      provider.connection,
-      (authority.payer as anchor.web3.Keypair),
-      usdcMint,
-      user.publicKey
-    );
+    const userUsdc = (
+      await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        authority.payer as anchor.web3.Keypair,
+        usdcMint,
+        user.publicKey
+      )
+    ).address;
 
     await mintTo(
       provider.connection,

@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
-declare_id!("ForeXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+declare_id!("GFzfEUfDjfC1jBg2ayrMryJFnxkb41FCabrWQimpPotV");
 
 // ─────────────────────────────────────────────
 //  Constants
@@ -15,7 +15,7 @@ pub const MAX_TEAM_LEN: usize = 32;
 //  Program
 // ─────────────────────────────────────────────
 #[program]
-pub mod foretrade {
+pub mod tei1 {
     use super::*;
 
     /// Initialize the global platform state (call once at deploy)
@@ -305,10 +305,9 @@ pub mod foretrade {
         let net_payout = gross_payout.checked_sub(fee).ok_or(ForeError::MathOverflow)?;
 
         // Transfer from vault to user (using PDA authority)
-        let market_key = market.key();
         let seeds = &[
             b"market",
-            market_key.as_ref(),
+            market.match_id.as_bytes(),
             &[market.bump],
         ];
         let signer_seeds = &[&seeds[..]];
