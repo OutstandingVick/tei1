@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AppWalletProvider } from "@/components/WalletProvider";
 import { Header } from "@/components/Header";
 import "./globals.css";
+import "@solana/wallet-adapter-react-ui/styles.css";
 
 export const metadata: Metadata = {
   title: "Tei — Live Football Prediction Markets",
