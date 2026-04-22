@@ -1,0 +1,28 @@
+{
+  "programId": "GFzfEUfDjfC1jBg2ayrMryJFnxkb41FCabrWQimpPotV",
+  "usdcMint": "9B39fZjQmvnrLhwzBfxrBJgyCMhzTDiiTRYB16xCwQR7",
+  "platformPda": "Baam1v6XZQSrWbEVLhCVUnfAWzrmpK2AnpzsdhfbZp3s",
+  "walletUsdcAta": "9JSFYX9aMtHWPCAbNt12BscAYvx9CKe4kuc1U5imrtcR",
+  "markets": [
+    {
+      "matchId": "match_arsenal_chelsea_001",
+      "marketPda": "AkjZuPrk6UmvoVERajzaWHmK4TmHH2TBeogZ2fLoAHFn"
+    },
+    {
+      "matchId": "match_barca_madrid_001",
+      "marketPda": "664AKFoCNy8X2CgQtDz7Z5VRgmZbPcY5LQCiXTCwVjkP"
+    },
+    {
+      "matchId": "match_psg_dortmund_001",
+      "marketPda": "LZy8x9BRmANnttvyyFBrgLQzykjybQGCkhsYFSQxFpu"
+    },
+    {
+      "matchId": "match_city_liverpool_001",
+      "marketPda": "HHR5gJudk5FFHhfgppdzrQUMQYBUdCBqcucfcB91EpVq"
+    },
+    {
+      "matchId": "match_inter_juventus_001",
+      "marketPda": "2QXXJEYsjrYoUHH5U2untzNFV7VKGeBWmTe1jnY573NF"
+    }
+  ]
+}

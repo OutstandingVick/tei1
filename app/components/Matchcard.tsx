@@ -6,7 +6,7 @@ import { Match } from "@/lib/matches";
 function formatKickoff(iso: string, status: Match["status"], minute?: number) {
   if (status === "live") return `LIVE ${minute}'`;
   const d = new Date(iso);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
 function formatVolume(n: number) {

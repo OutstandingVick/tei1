@@ -1,0 +1,252 @@
+{
+  "address": "GFzfEUfDjfC1jBg2ayrMryJFnxkb41FCabrWQimpPotV",
+  "metadata": {
+    "name": "tei1",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "buy_shares",
+      "discriminator": [40, 239, 138, 154, 8, 37, 106, 108],
+      "accounts": [
+        { "name": "market", "writable": true },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [112, 111, 115, 105, 116, 105, 111, 110] },
+              { "kind": "account", "path": "market" },
+              { "kind": "account", "path": "user" }
+            ]
+          }
+        },
+        { "name": "vault", "writable": true },
+        { "name": "user_usdc", "writable": true },
+        { "name": "user", "writable": true, "signer": true },
+        { "name": "token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "side", "type": { "defined": { "name": "Side" } } },
+        { "name": "usdc_in", "type": "u64" },
+        { "name": "min_shares_out", "type": "u64" }
+      ]
+    },
+    {
+      "name": "claim_winnings",
+      "discriminator": [161, 215, 24, 59, 14, 236, 242, 221],
+      "accounts": [
+        { "name": "market" },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [112, 111, 115, 105, 116, 105, 111, 110] },
+              { "kind": "account", "path": "market" },
+              { "kind": "account", "path": "user" }
+            ]
+          }
+        },
+        { "name": "vault", "writable": true, "relations": ["market"] },
+        { "name": "user_usdc", "writable": true },
+        { "name": "treasury", "writable": true },
+        { "name": "user", "signer": true },
+        { "name": "token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_market",
+      "discriminator": [103, 226, 97, 235, 200, 188, 251, 254],
+      "accounts": [
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [109, 97, 114, 107, 101, 116] },
+              { "kind": "arg", "path": "match_id" }
+            ]
+          }
+        },
+        {
+          "name": "platform",
+          "writable": true,
+          "pda": {
+            "seeds": [{ "kind": "const", "value": [112, 108, 97, 116, 102, 111, 114, 109] }]
+          }
+        },
+        { "name": "usdc_mint" },
+        { "name": "vault" },
+        { "name": "authority", "writable": true, "signer": true },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "match_id", "type": "string" },
+        { "name": "home_team", "type": "string" },
+        { "name": "away_team", "type": "string" },
+        { "name": "title", "type": "string" },
+        { "name": "market_type", "type": { "defined": { "name": "MarketType" } } },
+        { "name": "kickoff_time", "type": "i64" },
+        { "name": "close_time", "type": "i64" }
+      ]
+    },
+    {
+      "name": "initialize_platform",
+      "discriminator": [119, 201, 101, 45, 75, 122, 89, 3],
+      "accounts": [
+        {
+          "name": "platform",
+          "writable": true,
+          "pda": {
+            "seeds": [{ "kind": "const", "value": [112, 108, 97, 116, 102, 111, 114, 109] }]
+          }
+        },
+        { "name": "treasury" },
+        { "name": "authority", "writable": true, "signer": true },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": []
+    },
+    {
+      "name": "resolve_market",
+      "discriminator": [155, 23, 80, 173, 46, 74, 23, 239],
+      "accounts": [
+        { "name": "market", "writable": true },
+        { "name": "authority", "signer": true }
+      ],
+      "args": [
+        { "name": "outcome", "type": { "defined": { "name": "Outcome" } } }
+      ]
+    },
+    {
+      "name": "seed_liquidity",
+      "discriminator": [180, 57, 94, 35, 73, 48, 13, 11],
+      "accounts": [
+        { "name": "market", "writable": true },
+        { "name": "vault", "writable": true, "relations": ["market"] },
+        { "name": "seeder_usdc", "writable": true },
+        { "name": "seeder", "signer": true },
+        { "name": "token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" }
+      ],
+      "args": [
+        { "name": "yes_amount", "type": "u64" },
+        { "name": "no_amount", "type": "u64" }
+      ]
+    }
+  ],
+  "accounts": [
+    { "name": "Market", "discriminator": [219, 190, 213, 55, 0, 227, 198, 154] },
+    { "name": "Platform", "discriminator": [77, 92, 204, 58, 187, 98, 91, 12] },
+    { "name": "Position", "discriminator": [170, 188, 143, 228, 122, 64, 247, 208] }
+  ],
+  "errors": [
+    { "code": 6000, "name": "MarketNotOpen", "msg": "Market is not open for trading" },
+    { "code": 6001, "name": "MarketClosed", "msg": "Market trading window has closed" },
+    { "code": 6002, "name": "MarketNotResolved", "msg": "Market has not been resolved yet" },
+    { "code": 6003, "name": "InvalidAmount", "msg": "Invalid amount — must be greater than zero" },
+    { "code": 6004, "name": "SlippageExceeded", "msg": "Slippage tolerance exceeded" },
+    { "code": 6005, "name": "MathOverflow", "msg": "Math overflow" },
+    { "code": 6006, "name": "Unauthorized", "msg": "Unauthorized" },
+    { "code": 6007, "name": "AlreadyClaimed", "msg": "Winnings already claimed" },
+    { "code": 6008, "name": "InvalidOutcome", "msg": "Invalid outcome" },
+    { "code": 6009, "name": "StringTooLong", "msg": "String field too long" },
+    { "code": 6010, "name": "InvalidTimes", "msg": "Close time must be after kickoff time" }
+  ],
+  "types": [
+    {
+      "name": "Market",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "match_id", "type": "string" },
+          { "name": "home_team", "type": "string" },
+          { "name": "away_team", "type": "string" },
+          { "name": "title", "type": "string" },
+          { "name": "market_type", "type": { "defined": { "name": "MarketType" } } },
+          { "name": "kickoff_time", "type": "i64" },
+          { "name": "close_time", "type": "i64" },
+          { "name": "status", "type": { "defined": { "name": "MarketStatus" } } },
+          { "name": "outcome", "type": { "defined": { "name": "Outcome" } } },
+          { "name": "authority", "type": "pubkey" },
+          { "name": "usdc_mint", "type": "pubkey" },
+          { "name": "vault", "type": "pubkey" },
+          { "name": "yes_liquidity", "type": "u64" },
+          { "name": "no_liquidity", "type": "u64" },
+          { "name": "yes_shares_issued", "type": "u64" },
+          { "name": "no_shares_issued", "type": "u64" },
+          { "name": "total_volume", "type": "u64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "MarketStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Open" }, { "name": "Closed" },
+          { "name": "Resolved" }, { "name": "Cancelled" }
+        ]
+      }
+    },
+    {
+      "name": "MarketType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "MatchWinner" }, { "name": "OverUnder" }, { "name": "BothTeamsScore" }
+        ]
+      }
+    },
+    {
+      "name": "Outcome",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Undecided" }, { "name": "HomeWin" },
+          { "name": "AwayWin" }, { "name": "Draw" }
+        ]
+      }
+    },
+    {
+      "name": "Platform",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "pubkey" },
+          { "name": "treasury", "type": "pubkey" },
+          { "name": "total_markets", "type": "u64" },
+          { "name": "total_volume", "type": "u64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Position",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "user", "type": "pubkey" },
+          { "name": "market", "type": "pubkey" },
+          { "name": "yes_shares", "type": "u64" },
+          { "name": "no_shares", "type": "u64" },
+          { "name": "total_spent", "type": "u64" },
+          { "name": "claimed", "type": "bool" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Side",
+      "type": {
+        "kind": "enum",
+        "variants": [{ "name": "Yes" }, { "name": "No" }]
+      }
+    }
+  ]
+}
