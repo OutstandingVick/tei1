@@ -20,14 +20,14 @@ export type Match = {
 export const MOCK_MATCHES: Match[] = [
   {
     id: "1",
-    matchId: "match_arsenal_chelsea_001",
+    matchId: "match_arsenal_chelsea_v2",
     homeTeam: "Arsenal",
     awayTeam: "Chelsea",
     homeCrest: "https://resources.premierleague.com/premierleague/badges/t3.svg",
     awayCrest: "https://resources.premierleague.com/premierleague/badges/t8.svg",
     league: "Premier League",
     leagueLogo: "https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg",
-    kickoff: new Date(Date.now() + 1000 * 60 * 30).toISOString(), // 30 mins from now
+    kickoff: new Date(Date.now() + 1000 * 60 * 30).toISOString(),
     status: "live",
     minute: 34,
     homeScore: 1,
@@ -38,7 +38,7 @@ export const MOCK_MATCHES: Match[] = [
   },
   {
     id: "2",
-    matchId: "match_barca_madrid_001",
+    matchId: "match_barca_madrid_v2",
     homeTeam: "Barcelona",
     awayTeam: "Real Madrid",
     homeCrest: "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg",
@@ -53,7 +53,7 @@ export const MOCK_MATCHES: Match[] = [
   },
   {
     id: "3",
-    matchId: "match_psg_dortmund_001",
+    matchId: "match_psg_dortmund_v2",
     homeTeam: "PSG",
     awayTeam: "Dortmund",
     homeCrest: "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
@@ -68,7 +68,7 @@ export const MOCK_MATCHES: Match[] = [
   },
   {
     id: "4",
-    matchId: "match_city_liverpool_001",
+    matchId: "match_city_liverpool_v2",
     homeTeam: "Man City",
     awayTeam: "Liverpool",
     homeCrest: "https://resources.premierleague.com/premierleague/badges/t43.svg",
@@ -83,7 +83,7 @@ export const MOCK_MATCHES: Match[] = [
   },
   {
     id: "5",
-    matchId: "match_inter_juventus_001",
+    matchId: "match_inter_juventus_v2",
     homeTeam: "Inter Milan",
     awayTeam: "Juventus",
     homeCrest: "https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg",

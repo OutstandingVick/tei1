@@ -41,36 +41,11 @@ const WALLET_PATH = path.join(os.homedir(), ".config/solana/id.json");
 
 // Match data — mirrors lib/matches.ts
 const MATCHES = [
-  {
-    matchId: "match_arsenal_chelsea_001",
-    home: "Arsenal", away: "Chelsea",
-    title: "Arsenal vs Chelsea",
-    yesProb: 0.62,
-  },
-  {
-    matchId: "match_barca_madrid_001",
-    home: "Barcelona", away: "Real Madrid",
-    title: "Barcelona vs Real Madrid",
-    yesProb: 0.48,
-  },
-  {
-    matchId: "match_psg_dortmund_001",
-    home: "PSG", away: "Dortmund",
-    title: "PSG vs Dortmund",
-    yesProb: 0.55,
-  },
-  {
-    matchId: "match_city_liverpool_001",
-    home: "Man City", away: "Liverpool",
-    title: "Man City vs Liverpool",
-    yesProb: 0.44,
-  },
-  {
-    matchId: "match_inter_juventus_001",
-    home: "Inter Milan", away: "Juventus",
-    title: "Inter vs Juventus",
-    yesProb: 0.33,
-  },
+  { matchId: "match_arsenal_chelsea_v2", home: "Arsenal", away: "Chelsea", title: "Arsenal vs Chelsea", yesProb: 0.62 },
+  { matchId: "match_barca_madrid_v2", home: "Barcelona", away: "Real Madrid", title: "Barcelona vs Real Madrid", yesProb: 0.48 },
+  { matchId: "match_psg_dortmund_v2", home: "PSG", away: "Dortmund", title: "PSG vs Dortmund", yesProb: 0.55 },
+  { matchId: "match_city_liverpool_v2", home: "Man City", away: "Liverpool", title: "Man City vs Liverpool", yesProb: 0.44 },
+  { matchId: "match_inter_juventus_v2", home: "Inter Milan", away: "Juventus", title: "Inter vs Juventus", yesProb: 0.33 },
 ];
 
 // ── Helpers ───────────────────────────────────────────────
@@ -203,7 +178,7 @@ async function main() {
     // Kickoff time — stagger from 30min to 5h from now
     const now = Math.floor(Date.now() / 1000);
     const kickoff = now + 30 * 60;
-    const close = kickoff + 105 * 60;
+const close = now + 30 * 24 * 60 * 60; // close 30 days from now — won't expire during hackathon
 
     try {
       // Create market
