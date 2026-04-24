@@ -8,7 +8,7 @@ export const PROGRAM_ID = new PublicKey(
 
 // Devnet USDC mint (Circle's official devnet USDC)
 export const USDC_MINT = new PublicKey(
-  "9B39fZjQmvnrLhwzBfxrBJgyCMhzTDiiTRYB16xCwQR7"
+  "9UCkswA3eMayys4Uk1a7KSFEYWZVG2UnMcANQwLVR7ZN"
 );
 
 export function getPlatformPda() {

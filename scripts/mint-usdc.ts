@@ -27,8 +27,7 @@ const WALLET_PATH = path.join(os.homedir(), ".config/solana/id.json");
 const RECIPIENT = new PublicKey("4CtohmVcGLgpHTZYL68QrVhs3DjX3ESqA44rVrcyPvQT");
 
 // Mock USDC mint created by seed-devnet.ts
-const USDC_MINT = new PublicKey("9B39fZjQmvnrLhwzBfxrBJgyCMhzTDiiTRYB16xCwQR7");
-
+const USDC_MINT = new PublicKey("9UCkswA3eMayys4Uk1a7KSFEYWZVG2UnMcANQwLVR7ZN");
 // Amount to mint
 const AMOUNT_USDC = 1000;
 
