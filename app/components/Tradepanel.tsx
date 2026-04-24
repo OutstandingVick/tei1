@@ -173,6 +173,8 @@ export function TradePanel({ match }: { match: Match }) {
       setAmount("");
     } catch (e: any) {
       console.error("Trade error:", e);
+      console.error("Full error:", JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
+      if (e?.logs) console.error("Program logs:", e.logs);
       if (e?.message?.includes("insufficient funds")) {
         setError("Insufficient USDC balance.");
       } else if (e?.message?.includes("User rejected")) {
