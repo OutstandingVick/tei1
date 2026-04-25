@@ -156,13 +156,23 @@ export function TradePanel({ match }: { match: Match }) {
       tx.add(buyIx);
 
       const { blockhash, lastValidBlockHeight } =
-        await connection.getLatestBlockhash();
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = publicKey;
+  await connection.getLatestBlockhash();
+tx.recentBlockhash = blockhash;
+tx.feePayer = publicKey;
 
-      const sig = await sendTransaction(tx, connection, {
-        skipPreflight: false,
-      });
+// Simulate first to see the actual program error
+const sim = await connection.simulateTransaction(tx);
+console.log("=== SIMULATION RESULT ===");
+console.log("Error:", sim.value.err);
+console.log("Logs:", sim.value.logs);
+console.log("=========================");
+if (sim.value.err) {
+  throw new Error(`Simulation failed: ${JSON.stringify(sim.value.err)}\nLogs:\n${sim.value.logs?.join("\n")}`);
+}
+
+const sig = await sendTransaction(tx, connection, {
+  skipPreflight: true,
+});
 
       await connection.confirmTransaction(
         { signature: sig, blockhash, lastValidBlockHeight },

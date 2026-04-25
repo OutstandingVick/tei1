@@ -17,12 +17,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <AppWalletProvider>
-          <Header />
-          <main className="tei-main">{children}</main>
-        </AppWalletProvider>
-      </body>
+      <body suppressHydrationWarning>
+  <AppWalletProvider>
+    <Header />
+    <main className="tei-main">{children}</main>
+  </AppWalletProvider>
+</body>
     </html>
   );
 }
