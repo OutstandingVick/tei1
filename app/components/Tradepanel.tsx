@@ -5,6 +5,7 @@ import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { Program, AnchorProvider, BN, Idl } from "@coral-xyz/anchor";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   TOKEN_PROGRAM_ID,
@@ -24,7 +25,7 @@ type UserPosition = {
 };
 
 export function TradePanel({ match }: { match: Match }) {
-  const { connected, publicKey, signTransaction, sendTransaction } = useWallet();
+  const { connected, publicKey, signTransaction } = useWallet();
   const { connection } = useConnection();
 
   const [side, setSide] = useState<Side>("yes");
@@ -151,6 +152,40 @@ export function TradePanel({ match }: { match: Match }) {
         throw new Error("Market vault account not found. Seed liquidity for this market first.");
       }
 
+      // Preflight account existence checks to turn opaque AccountNotFound
+      // into a precise missing-account error before simulation.
+      const requiredAccounts = [
+        { label: "program", key: program.programId, allowMissing: false },
+        { label: "market", key: marketPda, allowMissing: false },
+        { label: "vault", key: vaultPubkey, allowMissing: false },
+        { label: "user", key: publicKey, allowMissing: true },
+        { label: "usdc_mint", key: USDC_MINT, allowMissing: false },
+        { label: "token_program", key: TOKEN_PROGRAM_ID, allowMissing: false },
+        { label: "associated_token_program", key: ASSOCIATED_TOKEN_PROGRAM_ID, allowMissing: false },
+        { label: "system_program", key: new PublicKey("11111111111111111111111111111111"), allowMissing: false },
+        { label: "position", key: positionPda, allowMissing: true },
+        { label: "user_usdc", key: userUsdcAta, allowMissing: !ataInfo },
+      ] as const;
+
+      const infos = await connection.getMultipleAccountsInfo(
+        requiredAccounts.map((a) => a.key)
+      );
+      const missing = requiredAccounts
+        .map((a, i) => ({ ...a, info: infos[i] }))
+        .filter((a) => !a.allowMissing && !a.info)
+        .map((a) => `${a.label}:${a.key.toBase58()}`);
+
+      const userInfo = infos[3];
+      if (!userInfo) {
+        throw new Error(
+          "Wallet account not found on devnet. In Phantom, switch to Devnet and request a SOL airdrop, then retry."
+        );
+      }
+
+      if (missing.length > 0) {
+        throw new Error(`Missing required on-chain accounts: ${missing.join(", ")}`);
+      }
+
       const usdcLamports = new BN(Math.floor(usdcIn * 1_000_000));
       const minSharesOut = new BN(1);
 
@@ -176,8 +211,16 @@ export function TradePanel({ match }: { match: Match }) {
 tx.recentBlockhash = blockhash;
 tx.feePayer = publicKey;
 
-      const sig = await sendTransaction(tx, connection, {
+      const sim = await connection.simulateTransaction(tx);
+      if (sim.value.err) {
+        const simLogs = sim.value.logs?.join("\n") ?? "No logs";
+        throw new Error(`Simulation failed: ${JSON.stringify(sim.value.err)}\n${simLogs}`);
+      }
+
+      const signedTx = await signTransaction(tx);
+      const sig = await connection.sendRawTransaction(signedTx.serialize(), {
         preflightCommitment: "confirmed",
+        maxRetries: 3,
       });
 
       await connection.confirmTransaction(
@@ -191,23 +234,24 @@ tx.feePayer = publicKey;
       console.error("Trade error:", e);
       console.error("Full error:", JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
       if (e?.logs) console.error("Program logs:", e.logs);
-      if (e?.message?.includes("AccountNotFound")) {
+      const message = `${e?.message ?? ""} ${e?.error?.message ?? ""}`;
+      if (message.includes("AccountNotFound")) {
         setError("Required on-chain account is missing. Ensure market liquidity is seeded and your token accounts exist.");
-      } else if (e?.message?.includes("insufficient funds")) {
+      } else if (message.includes("insufficient funds")) {
         setError("Insufficient USDC balance.");
-      } else if (e?.message?.includes("User rejected")) {
+      } else if (message.includes("User rejected") || message.includes("rejected")) {
         setError("Transaction cancelled.");
-      } else if (e?.message?.includes("MarketNotOpen")) {
+      } else if (message.includes("MarketNotOpen")) {
         setError("This market is not open for trading yet.");
-      } else if (e?.message?.includes("MarketClosed")) {
+      } else if (message.includes("MarketClosed")) {
         setError("Trading window has closed.");
       } else {
-        setError(e?.message || "Transaction failed. Check console.");
+        setError(e?.error?.message || e?.message || "Transaction failed. Check console.");
       }
     } finally {
       setLoading(false);
     }
-  }, [connected, publicKey, signTransaction, sendTransaction, connection, usdcIn, side, match]);
+  }, [connected, publicKey, signTransaction, connection, usdcIn, side, match]);
 
   const selectedTeam = side === "yes" ? match.homeTeam : match.awayTeam;
   const selectedPrice = side === "yes" ? match.yesPrice : match.noPrice;
