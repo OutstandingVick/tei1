@@ -11,7 +11,7 @@ import {
 } from "@solana/spl-token";
 import { ClientWalletMultiButton } from "@/components/ClientWalletMultiButton";
 import { Match } from "@/lib/matches";
-import { calculateSharesOut, PROGRAM_ID, USDC_MINT, getMarketPda, getPositionPda } from "@/lib/program";
+import { calculateSharesOut, USDC_MINT, getMarketPda, getPositionPda } from "@/lib/program";
 import IDL from "@/lib/idl.json";
 
 type Side = "yes" | "no";
@@ -132,8 +132,24 @@ export function TradePanel({ match }: { match: Match }) {
         );
       }
 
-      const marketAccount = await (program.account as any).market.fetch(marketPda);
+      let marketAccount: any;
+      try {
+        marketAccount = await (program.account as any).market.fetch(marketPda);
+      } catch {
+        throw new Error(`Market ${match.matchId} is not initialized on-chain yet. Seed/create this market first.`);
+      }
       const vaultPubkey = marketAccount.vault as PublicKey;
+
+      const [mintInfo, vaultInfo] = await Promise.all([
+        connection.getAccountInfo(USDC_MINT),
+        connection.getAccountInfo(vaultPubkey),
+      ]);
+      if (!mintInfo) {
+        throw new Error("USDC mint account not found on this cluster.");
+      }
+      if (!vaultInfo) {
+        throw new Error("Market vault account not found. Seed liquidity for this market first.");
+      }
 
       const usdcLamports = new BN(Math.floor(usdcIn * 1_000_000));
       const minSharesOut = new BN(1);
@@ -160,19 +176,9 @@ export function TradePanel({ match }: { match: Match }) {
 tx.recentBlockhash = blockhash;
 tx.feePayer = publicKey;
 
-// Simulate first to see the actual program error
-const sim = await connection.simulateTransaction(tx);
-console.log("=== SIMULATION RESULT ===");
-console.log("Error:", sim.value.err);
-console.log("Logs:", sim.value.logs);
-console.log("=========================");
-if (sim.value.err) {
-  throw new Error(`Simulation failed: ${JSON.stringify(sim.value.err)}\nLogs:\n${sim.value.logs?.join("\n")}`);
-}
-
-const sig = await sendTransaction(tx, connection, {
-  skipPreflight: true,
-});
+      const sig = await sendTransaction(tx, connection, {
+        preflightCommitment: "confirmed",
+      });
 
       await connection.confirmTransaction(
         { signature: sig, blockhash, lastValidBlockHeight },
@@ -185,7 +191,9 @@ const sig = await sendTransaction(tx, connection, {
       console.error("Trade error:", e);
       console.error("Full error:", JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
       if (e?.logs) console.error("Program logs:", e.logs);
-      if (e?.message?.includes("insufficient funds")) {
+      if (e?.message?.includes("AccountNotFound")) {
+        setError("Required on-chain account is missing. Ensure market liquidity is seeded and your token accounts exist.");
+      } else if (e?.message?.includes("insufficient funds")) {
         setError("Insufficient USDC balance.");
       } else if (e?.message?.includes("User rejected")) {
         setError("Transaction cancelled.");
