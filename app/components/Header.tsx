@@ -1,6 +1,6 @@
 "use client";
 
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { ClientWalletMultiButton } from "@/components/ClientWalletMultiButton";
 import Link from "next/link";
 
 export function Header() {
@@ -18,7 +18,7 @@ export function Header() {
       </nav>
 
       <div className="tei-header-right">
-        <WalletMultiButton className="tei-wallet-btn" />
+        <ClientWalletMultiButton className="tei-wallet-btn" />
       </div>
     </header>
   );

@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { Program, AnchorProvider, BN, Idl } from "@coral-xyz/anchor";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import {
@@ -10,6 +9,7 @@ import {
   createAssociatedTokenAccountInstruction,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
+import { ClientWalletMultiButton } from "@/components/ClientWalletMultiButton";
 import { Match } from "@/lib/matches";
 import { calculateSharesOut, PROGRAM_ID, USDC_MINT, getMarketPda, getPositionPda } from "@/lib/program";
 import IDL from "@/lib/idl.json";
@@ -396,7 +396,7 @@ const sig = await sendTransaction(tx, connection, {
         ) : (
           <div className="connect-prompt">
             <p>Connect your wallet to trade</p>
-            <WalletMultiButton />
+            <ClientWalletMultiButton />
           </div>
         )}
 
