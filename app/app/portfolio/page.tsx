@@ -211,6 +211,16 @@ export default function PortfolioPage() {
     return sorted;
   }, [rows, filter, sortBy]);
 
+  const filterCounts = useMemo(
+    () => ({
+      all: rows.length,
+      open: rows.filter((r) => !r.marketResolved).length,
+      resolved: rows.filter((r) => r.marketResolved).length,
+      claimed: rows.filter((r) => r.claimed).length,
+    }),
+    [rows]
+  );
+
   return (
     <div className="portfolio-page">
       <section className="portfolio-head">
@@ -274,7 +284,7 @@ export default function PortfolioPage() {
                         className={`portfolio-control-btn ${filter === item.key ? "active" : ""}`}
                         onClick={() => setFilter(item.key)}
                       >
-                        {item.label}
+                        {item.label} ({filterCounts[item.key]})
                       </button>
                     ))}
                   </div>
