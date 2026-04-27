@@ -5,14 +5,19 @@ import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { Program, AnchorProvider, BN, Idl } from "@coral-xyz/anchor";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { ClientWalletMultiButton } from "@/components/ClientWalletMultiButton";
 import { Match } from "@/lib/matches";
-import { calculateSharesOut, USDC_MINT, getMarketPda, getPositionPda } from "@/lib/program";
+import {
+  calculateSharesOut,
+  USDC_MINT,
+  getMarketPda,
+  getPlatformPda,
+  getPositionPda,
+} from "@/lib/program";
 import IDL from "@/lib/idl.json";
 
 type Side = "yes" | "no";
@@ -23,6 +28,15 @@ type UserPosition = {
   totalSpent: number;
   claimed: boolean;
 };
+
+type MarketOutcome = "home_win" | "away_win" | "draw" | "undecided";
+
+function formatOutcome(outcome: MarketOutcome) {
+  if (outcome === "home_win") return "Home Win";
+  if (outcome === "away_win") return "Away Win";
+  if (outcome === "draw") return "Draw";
+  return "Undecided";
+}
 
 export function TradePanel({ match }: { match: Match }) {
   const { connected, publicKey, signTransaction } = useWallet();
@@ -35,6 +49,10 @@ export function TradePanel({ match }: { match: Match }) {
   const [error, setError] = useState<string | null>(null);
   const [position, setPosition] = useState<UserPosition | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<number | null>(null);
+  const [marketResolved, setMarketResolved] = useState(false);
+  const [marketOutcome, setMarketOutcome] = useState<MarketOutcome>("undecided");
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [claimSig, setClaimSig] = useState<string | null>(null);
 
   // ── Fetch user position + balance ──
   const fetchPositionAndBalance = useCallback(async () => {
@@ -62,6 +80,21 @@ export function TradePanel({ match }: { match: Match }) {
         });
       } catch {
         setPosition(null); // no position yet
+      }
+
+      // Fetch market status
+      try {
+        const market: any = await (program.account as any).market.fetch(marketPda);
+        const statusKey = Object.keys(market.status ?? {})[0];
+        const outcomeKey = Object.keys(market.outcome ?? {})[0];
+        setMarketResolved(statusKey === "resolved");
+        if (outcomeKey === "homeWin") setMarketOutcome("home_win");
+        else if (outcomeKey === "awayWin") setMarketOutcome("away_win");
+        else if (outcomeKey === "draw") setMarketOutcome("draw");
+        else setMarketOutcome("undecided");
+      } catch {
+        setMarketResolved(false);
+        setMarketOutcome("undecided");
       }
 
       // Fetch USDC balance
@@ -106,6 +139,7 @@ export function TradePanel({ match }: { match: Match }) {
     setLoading(true);
     setError(null);
     setTxSig(null);
+    setClaimSig(null);
 
     try {
       const provider = new AnchorProvider(
@@ -150,40 +184,6 @@ export function TradePanel({ match }: { match: Match }) {
       }
       if (!vaultInfo) {
         throw new Error("Market vault account not found. Seed liquidity for this market first.");
-      }
-
-      // Preflight account existence checks to turn opaque AccountNotFound
-      // into a precise missing-account error before simulation.
-      const requiredAccounts = [
-        { label: "program", key: program.programId, allowMissing: false },
-        { label: "market", key: marketPda, allowMissing: false },
-        { label: "vault", key: vaultPubkey, allowMissing: false },
-        { label: "user", key: publicKey, allowMissing: true },
-        { label: "usdc_mint", key: USDC_MINT, allowMissing: false },
-        { label: "token_program", key: TOKEN_PROGRAM_ID, allowMissing: false },
-        { label: "associated_token_program", key: ASSOCIATED_TOKEN_PROGRAM_ID, allowMissing: false },
-        { label: "system_program", key: new PublicKey("11111111111111111111111111111111"), allowMissing: false },
-        { label: "position", key: positionPda, allowMissing: true },
-        { label: "user_usdc", key: userUsdcAta, allowMissing: !ataInfo },
-      ] as const;
-
-      const infos = await connection.getMultipleAccountsInfo(
-        requiredAccounts.map((a) => a.key)
-      );
-      const missing = requiredAccounts
-        .map((a, i) => ({ ...a, info: infos[i] }))
-        .filter((a) => !a.allowMissing && !a.info)
-        .map((a) => `${a.label}:${a.key.toBase58()}`);
-
-      const userInfo = infos[3];
-      if (!userInfo) {
-        throw new Error(
-          "Wallet account not found on devnet. In Phantom, switch to Devnet and request a SOL airdrop, then retry."
-        );
-      }
-
-      if (missing.length > 0) {
-        throw new Error(`Missing required on-chain accounts: ${missing.join(", ")}`);
       }
 
       const usdcLamports = new BN(Math.floor(usdcIn * 1_000_000));
@@ -232,8 +232,6 @@ tx.feePayer = publicKey;
       setAmount("");
     } catch (e: any) {
       console.error("Trade error:", e);
-      console.error("Full error:", JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
-      if (e?.logs) console.error("Program logs:", e.logs);
       const message = `${e?.message ?? ""} ${e?.error?.message ?? ""}`;
       if (message.includes("AccountNotFound")) {
         setError("Required on-chain account is missing. Ensure market liquidity is seeded and your token accounts exist.");
@@ -253,6 +251,91 @@ tx.feePayer = publicKey;
     }
   }, [connected, publicKey, signTransaction, connection, usdcIn, side, match]);
 
+  const handleClaim = useCallback(async () => {
+    if (!connected || !publicKey || !signTransaction) return;
+
+    setClaimLoading(true);
+    setError(null);
+    setTxSig(null);
+    setClaimSig(null);
+
+    try {
+      const provider = new AnchorProvider(
+        connection,
+        { publicKey, signTransaction, signAllTransactions: async (txs) => txs },
+        { commitment: "confirmed" }
+      );
+      const program = new Program(IDL as Idl, provider);
+      const [marketPda] = getMarketPda(match.matchId);
+      const [positionPda] = getPositionPda(marketPda, publicKey);
+      const [platformPda] = getPlatformPda();
+
+      const userUsdcAta = await getAssociatedTokenAddress(USDC_MINT, publicKey);
+      const ataInfo = await connection.getAccountInfo(userUsdcAta);
+      if (!ataInfo) {
+        throw new Error("USDC token account not found. Buy shares first or mint test USDC.");
+      }
+
+      const marketAccount: any = await (program.account as any).market.fetch(marketPda);
+      const platformAccount: any = await (program.account as any).platform.fetch(platformPda);
+      const vaultPubkey = marketAccount.vault as PublicKey;
+      const treasuryPubkey = platformAccount.treasury as PublicKey;
+
+      const claimIx = await (program.methods as any)
+        .claimWinnings()
+        .accounts({
+          market: marketPda,
+          position: positionPda,
+          vault: vaultPubkey,
+          userUsdc: userUsdcAta,
+          treasury: treasuryPubkey,
+          user: publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .instruction();
+
+      const tx = new Transaction().add(claimIx);
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      tx.recentBlockhash = blockhash;
+      tx.feePayer = publicKey;
+
+      const sim = await connection.simulateTransaction(tx);
+      if (sim.value.err) {
+        const simLogs = sim.value.logs?.join("\n") ?? "No logs";
+        throw new Error(`Claim simulation failed: ${JSON.stringify(sim.value.err)}\n${simLogs}`);
+      }
+
+      const signedTx = await signTransaction(tx);
+      const sig = await connection.sendRawTransaction(signedTx.serialize(), {
+        preflightCommitment: "confirmed",
+        maxRetries: 3,
+      });
+      await connection.confirmTransaction(
+        { signature: sig, blockhash, lastValidBlockHeight },
+        "confirmed"
+      );
+
+      setClaimSig(sig);
+      fetchPositionAndBalance();
+    } catch (e: any) {
+      console.error("Claim error:", e);
+      const message = `${e?.message ?? ""} ${e?.error?.message ?? ""}`;
+      if (message.includes("MarketNotResolved")) {
+        setError("Market is not resolved yet.");
+      } else if (message.includes("AlreadyClaimed")) {
+        setError("Winnings already claimed.");
+      } else if (message.includes("NoWinningShares")) {
+        setError("No winning shares to claim for this outcome.");
+      } else if (message.includes("User rejected") || message.includes("rejected")) {
+        setError("Transaction cancelled.");
+      } else {
+        setError(e?.error?.message || e?.message || "Claim failed.");
+      }
+    } finally {
+      setClaimLoading(false);
+    }
+  }, [connected, publicKey, signTransaction, connection, match.matchId, fetchPositionAndBalance]);
+
   const selectedTeam = side === "yes" ? match.homeTeam : match.awayTeam;
   const selectedPrice = side === "yes" ? match.yesPrice : match.noPrice;
 
@@ -262,6 +345,7 @@ tx.feePayer = publicKey;
   const avgCost = hasPosition && totalShares > 0
     ? (position!.totalSpent / totalShares).toFixed(3)
     : "—";
+  const canClaim = Boolean(hasPosition && marketResolved && !position!.claimed);
 
   return (
     <div className="trade-panel-wrap">
@@ -274,6 +358,11 @@ tx.feePayer = publicKey;
               Spent ${position!.totalSpent.toFixed(2)}
             </span>
           </div>
+          {marketResolved && (
+            <div className="position-market-status">
+              Resolved: {formatOutcome(marketOutcome)}
+            </div>
+          )}
 
           <div className="position-shares">
             {position!.yesShares > 0 && (
@@ -315,6 +404,40 @@ tx.feePayer = publicKey;
               </span>
             </div>
           </div>
+
+          {position!.claimed && (
+            <div className="trade-success">
+              <span>✓ Winnings already claimed</span>
+            </div>
+          )}
+          {canClaim && (
+            <button
+              className={`trade-btn yes ${claimLoading ? "loading" : ""}`}
+              onClick={handleClaim}
+              disabled={claimLoading}
+            >
+              {claimLoading ? (
+                <span className="trade-btn-loading">
+                  <span className="spinner" /> Claiming on-chain...
+                </span>
+              ) : (
+                "Claim Winnings"
+              )}
+            </button>
+          )}
+          {claimSig && (
+            <div className="trade-success">
+              <span>✓ Claim confirmed on-chain</span>
+              <a
+                href={`https://explorer.solana.com/tx/${claimSig}?cluster=devnet`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="tx-link"
+              >
+                View claim on Solana Explorer →
+              </a>
+            </div>
+          )}
         </div>
       )}
 

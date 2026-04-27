@@ -1010,3 +1010,105 @@ body::before {
   color: var(--text-primary);
   font-weight: 500;
 }
+
+.position-market-status {
+  font-size: 0.72rem;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.6rem;
+}
+
+.admin-page {
+  padding-top: 1.5rem;
+}
+
+.admin-panel {
+  margin-top: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-panel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.admin-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.admin-subtitle {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.admin-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-row {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  background: var(--bg-input);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-row-title {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+}
+
+.admin-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.admin-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .admin-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-actions {
+    width: 100%;
+  }
+
+  .admin-actions .quick-btn {
+    flex: 1;
+  }
+}
