@@ -2,13 +2,15 @@
 
 import { MOCK_MATCHES } from "@/lib/matches";
 import { TradePanel } from "@/components/TradePanel";
+import { useLiveMatches } from "@/lib/liveMarkets";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { use } from "react";
 
 export default function MatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const match = MOCK_MATCHES.find((m) => m.id === id);
+  const matches = useLiveMatches(MOCK_MATCHES);
+  const match = matches.find((m) => m.id === id);
   if (!match) notFound();
 
   const isLive = match.status === "live";

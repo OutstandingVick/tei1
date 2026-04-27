@@ -1,9 +1,14 @@
+"use client";
+
+import { useMemo } from "react";
 import { MOCK_MATCHES } from "@/lib/matches";
 import { MatchCard } from "@/components/MatchCard";
+import { useLiveMatches } from "@/lib/liveMarkets";
 
 export default function Home() {
-  const live = MOCK_MATCHES.filter((m) => m.status === "live");
-  const upcoming = MOCK_MATCHES.filter((m) => m.status === "upcoming");
+  const matches = useLiveMatches(MOCK_MATCHES);
+  const live = useMemo(() => matches.filter((m) => m.status === "live"), [matches]);
+  const upcoming = useMemo(() => matches.filter((m) => m.status === "upcoming"), [matches]);
 
   return (
     <div className="tei-home">
