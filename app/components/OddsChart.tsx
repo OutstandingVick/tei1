@@ -34,13 +34,12 @@ function buildAreaPath(values: number[]) {
 }
 
 function windowMs(range: TimeRange) {
-  if (range === "5m") return 5 * 60 * 1000;
-  if (range === "1h") return 60 * 60 * 1000;
-  if (range === "6h") return 6 * 60 * 60 * 1000;
-  return 24 * 60 * 60 * 1000;
+  if (range === "10m") return 10 * 60 * 1000;
+  if (range === "20m") return 20 * 60 * 1000;
+  return 30 * 60 * 1000;
 }
 
-type TimeRange = "5m" | "1h" | "6h" | "1d";
+type TimeRange = "10m" | "20m" | "30m";
 type OddsSide = "yes" | "no";
 
 function normalizePoints(raw: unknown): PricePoint[] {
@@ -84,7 +83,7 @@ export function OddsChart({
   awayTeam: string;
 }) {
   const [points, setPoints] = useState<PricePoint[]>([]);
-  const [range, setRange] = useState<TimeRange>("1h");
+  const [range, setRange] = useState<TimeRange>("10m");
   const [side, setSide] = useState<OddsSide>("yes");
 
   const safePrice = clamp(yesPrice, 0.01, 0.99);
@@ -153,7 +152,7 @@ export function OddsChart({
 
       <div className="odds-chart-controls">
         <div className="odds-chart-ranges">
-          {(["5m", "1h", "6h", "1d"] as TimeRange[]).map((r) => (
+          {(["10m", "20m", "30m"] as TimeRange[]).map((r) => (
             <button
               key={r}
               className={`odds-chip ${range === r ? "active" : ""}`}
