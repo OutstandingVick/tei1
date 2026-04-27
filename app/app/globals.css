@@ -1090,6 +1090,12 @@ body::before {
   color: var(--text-primary);
 }
 
+.position-side-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .position-shares-unit {
   font-family: var(--font-mono);
   font-size: 0.72rem;

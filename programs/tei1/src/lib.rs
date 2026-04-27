@@ -220,6 +220,118 @@ pub mod tei1 {
         Ok(())
     }
 
+    /// Sell shares back into the AMM (position exit / "cancel trade" path)
+    /// Inverse of buy_shares under the same constant-product market maker.
+    pub fn sell_shares(
+        ctx: Context<SellShares>,
+        side: Side,           // YES or NO shares to sell
+        shares_in: u64,       // shares amount (6 decimals)
+        min_usdc_out: u64,    // slippage protection
+    ) -> Result<()> {
+        let position = &mut ctx.accounts.position;
+        let market = &ctx.accounts.market;
+
+        require!(market.status == MarketStatus::Open, ForeError::MarketNotOpen);
+        require!(shares_in > 0, ForeError::InvalidAmount);
+
+        let clock = Clock::get()?;
+        require!(clock.unix_timestamp < market.close_time, ForeError::MarketClosed);
+        require!(position.user == ctx.accounts.user.key(), ForeError::Unauthorized);
+
+        // Ensure user actually owns the shares they are trying to sell.
+        match side {
+            Side::Yes => require!(position.yes_shares >= shares_in, ForeError::InsufficientShares),
+            Side::No => require!(position.no_shares >= shares_in, ForeError::InsufficientShares),
+        }
+
+        // Inverse AMM pricing:
+        // YES sell: usdc_out = (no_liquidity * yes_shares_in) / (yes_liquidity + yes_shares_in)
+        // NO  sell: usdc_out = (yes_liquidity * no_shares_in) / (no_liquidity + no_shares_in)
+        let (usdc_out, new_yes_liq, new_no_liq) = match side {
+            Side::Yes => {
+                let out = market.no_liquidity
+                    .checked_mul(shares_in)
+                    .ok_or(ForeError::MathOverflow)?
+                    .checked_div(
+                        market.yes_liquidity.checked_add(shares_in).ok_or(ForeError::MathOverflow)?
+                    )
+                    .ok_or(ForeError::MathOverflow)?;
+
+                let new_yes = market.yes_liquidity.checked_add(shares_in).ok_or(ForeError::MathOverflow)?;
+                let new_no = market.no_liquidity.checked_sub(out).ok_or(ForeError::InsufficientLiquidity)?;
+                (out, new_yes, new_no)
+            }
+            Side::No => {
+                let out = market.yes_liquidity
+                    .checked_mul(shares_in)
+                    .ok_or(ForeError::MathOverflow)?
+                    .checked_div(
+                        market.no_liquidity.checked_add(shares_in).ok_or(ForeError::MathOverflow)?
+                    )
+                    .ok_or(ForeError::MathOverflow)?;
+
+                let new_yes = market.yes_liquidity.checked_sub(out).ok_or(ForeError::InsufficientLiquidity)?;
+                let new_no = market.no_liquidity.checked_add(shares_in).ok_or(ForeError::MathOverflow)?;
+                (out, new_yes, new_no)
+            }
+        };
+
+        require!(usdc_out >= min_usdc_out, ForeError::SlippageExceeded);
+        require!(ctx.accounts.vault.amount >= usdc_out, ForeError::InsufficientLiquidity);
+
+        // Transfer USDC from vault to user using market PDA as vault authority.
+        let market_key = market.key();
+        let seeds = &[
+            b"market",
+            market.match_id.as_bytes(),
+            &[market.bump],
+        ];
+        let signer_seeds = &[&seeds[..]];
+        token::transfer(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.vault.to_account_info(),
+                    to: ctx.accounts.user_usdc.to_account_info(),
+                    authority: ctx.accounts.market.to_account_info(),
+                },
+                signer_seeds,
+            ),
+            usdc_out,
+        )?;
+
+        // Update market accounting.
+        let market = &mut ctx.accounts.market;
+        market.yes_liquidity = new_yes_liq;
+        market.no_liquidity = new_no_liq;
+        market.total_volume = market.total_volume.checked_add(usdc_out).ok_or(ForeError::MathOverflow)?;
+
+        match side {
+            Side::Yes => {
+                market.yes_shares_issued = market.yes_shares_issued.checked_sub(shares_in).ok_or(ForeError::MathOverflow)?;
+                position.yes_shares = position.yes_shares.checked_sub(shares_in).ok_or(ForeError::MathOverflow)?;
+            }
+            Side::No => {
+                market.no_shares_issued = market.no_shares_issued.checked_sub(shares_in).ok_or(ForeError::MathOverflow)?;
+                position.no_shares = position.no_shares.checked_sub(shares_in).ok_or(ForeError::MathOverflow)?;
+            }
+        }
+
+        // Keep a simple net-spent approximation for UI.
+        position.total_spent = position.total_spent.saturating_sub(usdc_out);
+
+        emit!(SharesSold {
+            market: market_key,
+            user: ctx.accounts.user.key(),
+            side: side.clone(),
+            shares_in,
+            usdc_out,
+        });
+
+        msg!("Sold {} shares on {:?} for {} USDC", shares_in, side, usdc_out);
+        Ok(())
+    }
+
     /// Resolve a market — admin calls this with the real outcome
     /// In MUP: this is a manual button. Later: oracle-triggered.
     pub fn resolve_market(
@@ -508,6 +620,30 @@ pub struct BuyShares<'info> {
 }
 
 #[derive(Accounts)]
+pub struct SellShares<'info> {
+    #[account(mut)]
+    pub market: Account<'info, Market>,
+
+    #[account(
+        mut,
+        seeds = [b"position", market.key().as_ref(), user.key().as_ref()],
+        bump = position.bump
+    )]
+    pub position: Account<'info, Position>,
+
+    #[account(mut, constraint = vault.key() == market.vault)]
+    pub vault: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    pub user_usdc: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    pub user: Signer<'info>,
+
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
 pub struct ResolveMarket<'info> {
     #[account(mut)]
     pub market: Account<'info, Market>,
@@ -593,6 +729,15 @@ pub struct SharesBought {
 }
 
 #[event]
+pub struct SharesSold {
+    pub market: Pubkey,
+    pub user: Pubkey,
+    pub side: Side,
+    pub shares_in: u64,
+    pub usdc_out: u64,
+}
+
+#[event]
 pub struct MarketResolved {
     pub market: Pubkey,
     pub outcome: Outcome,
@@ -635,4 +780,8 @@ pub enum ForeError {
     StringTooLong,
     #[msg("Close time must be after kickoff time")]
     InvalidTimes,
+    #[msg("Insufficient shares for this action")]
+    InsufficientShares,
+    #[msg("Insufficient market liquidity")]
+    InsufficientLiquidity,
 }

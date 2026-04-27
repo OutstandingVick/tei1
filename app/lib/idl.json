@@ -36,6 +36,33 @@
       ]
     },
     {
+      "name": "sell_shares",
+      "discriminator": [184, 164, 169, 16, 231, 158, 199, 196],
+      "accounts": [
+        { "name": "market", "writable": true },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [112, 111, 115, 105, 116, 105, 111, 110] },
+              { "kind": "account", "path": "market" },
+              { "kind": "account", "path": "user" }
+            ]
+          }
+        },
+        { "name": "vault", "writable": true, "relations": ["market"] },
+        { "name": "user_usdc", "writable": true },
+        { "name": "user", "writable": true, "signer": true },
+        { "name": "token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" }
+      ],
+      "args": [
+        { "name": "side", "type": { "defined": { "name": "Side" } } },
+        { "name": "shares_in", "type": "u64" },
+        { "name": "min_usdc_out", "type": "u64" }
+      ]
+    },
+    {
       "name": "claim_winnings",
       "discriminator": [161, 215, 24, 59, 14, 236, 242, 221],
       "accounts": [
@@ -155,7 +182,9 @@
     { "code": 6007, "name": "AlreadyClaimed", "msg": "Winnings already claimed" },
     { "code": 6008, "name": "InvalidOutcome", "msg": "Invalid outcome" },
     { "code": 6009, "name": "StringTooLong", "msg": "String field too long" },
-    { "code": 6010, "name": "InvalidTimes", "msg": "Close time must be after kickoff time" }
+    { "code": 6010, "name": "InvalidTimes", "msg": "Close time must be after kickoff time" },
+    { "code": 6011, "name": "InsufficientShares", "msg": "Insufficient shares for this action" },
+    { "code": 6012, "name": "InsufficientLiquidity", "msg": "Insufficient market liquidity" }
   ],
   "types": [
     {

@@ -53,6 +53,7 @@ export function TradePanel({ match }: { match: Match }) {
   const [marketOutcome, setMarketOutcome] = useState<MarketOutcome>("undecided");
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimSig, setClaimSig] = useState<string | null>(null);
+  const [sellLoading, setSellLoading] = useState<Side | null>(null);
 
   // ── Fetch user position + balance ──
   const fetchPositionAndBalance = useCallback(async () => {
@@ -336,6 +337,82 @@ tx.feePayer = publicKey;
     }
   }, [connected, publicKey, signTransaction, connection, match.matchId, fetchPositionAndBalance]);
 
+  const handleSell = useCallback(async (sellSide: Side, sharesInUi: number) => {
+    if (!connected || !publicKey || !signTransaction) return;
+    if (sharesInUi <= 0) return;
+
+    setSellLoading(sellSide);
+    setError(null);
+    setTxSig(null);
+    setClaimSig(null);
+
+    try {
+      const provider = new AnchorProvider(
+        connection,
+        { publicKey, signTransaction, signAllTransactions: async (txs) => txs },
+        { commitment: "confirmed" }
+      );
+      const program = new Program(IDL as Idl, provider);
+      const [marketPda] = getMarketPda(match.matchId);
+      const [positionPda] = getPositionPda(marketPda, publicKey);
+      const userUsdcAta = await getAssociatedTokenAddress(USDC_MINT, publicKey);
+
+      const marketAccount: any = await (program.account as any).market.fetch(marketPda);
+      const vaultPubkey = marketAccount.vault as PublicKey;
+      const sharesIn = new BN(Math.floor(sharesInUi * 1_000_000));
+
+      const sellIx = await (program.methods as any)
+        .sellShares(sellSide === "yes" ? { yes: {} } : { no: {} }, sharesIn, new BN(1))
+        .accounts({
+          market: marketPda,
+          position: positionPda,
+          vault: vaultPubkey,
+          userUsdc: userUsdcAta,
+          user: publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .instruction();
+
+      const tx = new Transaction().add(sellIx);
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      tx.recentBlockhash = blockhash;
+      tx.feePayer = publicKey;
+
+      const sim = await connection.simulateTransaction(tx);
+      if (sim.value.err) {
+        const simLogs = sim.value.logs?.join("\n") ?? "No logs";
+        throw new Error(`Sell simulation failed: ${JSON.stringify(sim.value.err)}\n${simLogs}`);
+      }
+
+      const signedTx = await signTransaction(tx);
+      const sig = await connection.sendRawTransaction(signedTx.serialize(), {
+        preflightCommitment: "confirmed",
+        maxRetries: 3,
+      });
+      await connection.confirmTransaction(
+        { signature: sig, blockhash, lastValidBlockHeight },
+        "confirmed"
+      );
+
+      setTxSig(sig);
+      fetchPositionAndBalance();
+    } catch (e: any) {
+      console.error("Sell error:", e);
+      const message = `${e?.message ?? ""} ${e?.error?.message ?? ""}`;
+      if (message.includes("InsufficientShares")) {
+        setError("Not enough shares to sell.");
+      } else if (message.includes("MarketClosed") || message.includes("MarketNotOpen")) {
+        setError("Selling is only available while market is open.");
+      } else if (message.includes("User rejected") || message.includes("rejected")) {
+        setError("Transaction cancelled.");
+      } else {
+        setError(e?.error?.message || e?.message || "Sell transaction failed.");
+      }
+    } finally {
+      setSellLoading(null);
+    }
+  }, [connected, publicKey, signTransaction, connection, match.matchId, fetchPositionAndBalance]);
+
   const selectedTeam = side === "yes" ? match.homeTeam : match.awayTeam;
   const selectedPrice = side === "yes" ? match.yesPrice : match.noPrice;
 
@@ -371,9 +448,20 @@ tx.feePayer = publicKey;
                   <span className="position-dot yes-dot" />
                   {match.homeTeam} (YES)
                 </div>
-                <div className="position-shares-val">
-                  {position!.yesShares.toFixed(2)}
-                  <span className="position-shares-unit"> shares</span>
+                <div className="position-side-actions">
+                  <div className="position-shares-val">
+                    {position!.yesShares.toFixed(2)}
+                    <span className="position-shares-unit"> shares</span>
+                  </div>
+                  {!marketResolved && (
+                    <button
+                      className="quick-btn"
+                      onClick={() => handleSell("yes", position!.yesShares)}
+                      disabled={sellLoading !== null}
+                    >
+                      {sellLoading === "yes" ? "Selling..." : "Sell"}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -384,9 +472,20 @@ tx.feePayer = publicKey;
                   <span className="position-dot no-dot" />
                   {match.awayTeam} (NO)
                 </div>
-                <div className="position-shares-val">
-                  {position!.noShares.toFixed(2)}
-                  <span className="position-shares-unit"> shares</span>
+                <div className="position-side-actions">
+                  <div className="position-shares-val">
+                    {position!.noShares.toFixed(2)}
+                    <span className="position-shares-unit"> shares</span>
+                  </div>
+                  {!marketResolved && (
+                    <button
+                      className="quick-btn"
+                      onClick={() => handleSell("no", position!.noShares)}
+                      disabled={sellLoading !== null}
+                    >
+                      {sellLoading === "no" ? "Selling..." : "Sell"}
+                    </button>
+                  )}
                 </div>
               </div>
             )}

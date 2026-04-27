@@ -234,6 +234,44 @@ describe("tei1", () => {
     console.log("   Implied YES price:", market.noLiquidity.toNumber() / (market.yesLiquidity.toNumber() + market.noLiquidity.toNumber()));
   });
 
+  it("User sells part of YES shares (position exit)", async () => {
+    const [positionPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("position"), marketPda.toBytes(), user.publicKey.toBytes()],
+      program.programId
+    );
+
+    const userAccounts = await provider.connection.getTokenAccountsByOwner(
+      user.publicKey,
+      { mint: usdcMint }
+    );
+    const userUsdc = userAccounts.value[0].pubkey;
+    const beforeUsdc = (await getAccount(provider.connection, userUsdc)).amount;
+
+    const beforePos: any = await (program.account as any).position.fetch(positionPda);
+    const sharesToSell = new anchor.BN(Math.floor(beforePos.yesShares.toNumber() / 2));
+
+    await (program.methods as any)
+      .sellShares({ yes: {} }, sharesToSell, new anchor.BN(1))
+      .accounts({
+        market: marketPda,
+        position: positionPda,
+        vault: vaultPda,
+        userUsdc: userUsdc,
+        user: user.publicKey,
+        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+      })
+      .signers([user])
+      .rpc();
+
+    const afterPos: any = await (program.account as any).position.fetch(positionPda);
+    const afterUsdc = (await getAccount(provider.connection, userUsdc)).amount;
+
+    assert.isTrue(afterPos.yesShares.toNumber() < beforePos.yesShares.toNumber());
+    assert.isTrue(afterUsdc > beforeUsdc);
+
+    console.log("✅ YES shares sold:", sharesToSell.toNumber() / 1_000_000);
+  });
+
   it("Admin resolves market — Arsenal wins (HomeWin)", async () => {
     await program.methods
       .resolveMarket({ homeWin: {} })
