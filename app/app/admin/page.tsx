@@ -154,6 +154,9 @@ export default function AdminPage() {
           <h1 className="admin-title">Admin Resolve Panel</h1>
           <span className="admin-subtitle">Manual oracle for demo flow</span>
         </div>
+        <div className="admin-note">
+          <strong>Oracle status:</strong> Manual. Match outcomes are currently set by the platform authority wallet for demo purposes.
+        </div>
 
         {!connected && (
           <div className="connect-prompt">
