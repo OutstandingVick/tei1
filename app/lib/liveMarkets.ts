@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AnchorProvider, Idl, Program } from "@coral-xyz/anchor";
-import { AccountInfo, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { Match } from "@/lib/matches";
 import { getMarketPda } from "@/lib/program";
@@ -61,46 +61,12 @@ async function fetchLiveMarketData(connection: ReturnType<typeof useConnection>[
   return Object.fromEntries(rows) as Record<string, LiveMarketData | null>;
 }
 
-function decodeLiveMarketData(program: Program, accountInfo: AccountInfo<Buffer>): LiveMarketData | null {
-  try {
-    const market: any = (program.coder.accounts as any).decode("market", accountInfo.data);
-    const yesLiquidity = market.yesLiquidity.toNumber() / 1_000_000;
-    const noLiquidity = market.noLiquidity.toNumber() / 1_000_000;
-    const { yesPrice, noPrice } = derivePrices(yesLiquidity, noLiquidity);
-    return {
-      yesPrice,
-      noPrice,
-      totalVolume: market.totalVolume.toNumber() / 1_000_000,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function createReadOnlyProgram(connection: ReturnType<typeof useConnection>["connection"]) {
-  const readOnlyWallet = {
-    publicKey: new PublicKey("11111111111111111111111111111111"),
-    signTransaction: async (tx: unknown) => tx,
-    signAllTransactions: async (txs: unknown[]) => txs,
-  };
-  const provider = new AnchorProvider(connection, readOnlyWallet as any, {
-    commitment: "confirmed",
-  });
-  return new Program(IDL as Idl, provider);
-}
-
 export function useLiveMatches(baseMatches: Match[], pollMs = 15000) {
   const { connection } = useConnection();
   const [liveDataByMatchId, setLiveDataByMatchId] = useState<Record<string, LiveMarketData | null>>({});
 
   useEffect(() => {
     let stopped = false;
-    const program = createReadOnlyProgram(connection);
-    const subIds: number[] = [];
-    const pdaMap = baseMatches.map((match) => ({
-      matchId: match.matchId,
-      marketPda: getMarketPda(match.matchId)[0],
-    }));
 
     const run = async () => {
       try {
@@ -113,31 +79,11 @@ export function useLiveMatches(baseMatches: Match[], pollMs = 15000) {
       }
     };
 
-    for (const { matchId, marketPda } of pdaMap) {
-      const id = connection.onAccountChange(
-        marketPda,
-        (accountInfo) => {
-          if (stopped) return;
-          const live = decodeLiveMarketData(program, accountInfo);
-          if (!live) return;
-          setLiveDataByMatchId((prev) => ({
-            ...prev,
-            [matchId]: live,
-          }));
-        },
-        "confirmed"
-      );
-      subIds.push(id);
-    }
-
     run();
     const timer = setInterval(run, pollMs);
     return () => {
       stopped = true;
       clearInterval(timer);
-      for (const id of subIds) {
-        void connection.removeAccountChangeListener(id);
-      }
     };
   }, [connection, baseMatches, pollMs]);
 
