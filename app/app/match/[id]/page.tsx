@@ -23,6 +23,7 @@ export default function MatchPage({ params }: { params: Promise<{ id: string }> 
 
       <div className="match-page-left">
         <OddsChart
+          matchId={match.matchId}
           yesPrice={match.yesPrice}
           homeTeam={match.homeTeam}
           awayTeam={match.awayTeam}
