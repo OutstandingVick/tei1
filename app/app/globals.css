@@ -418,6 +418,13 @@ body::before {
   padding-top: 1.5rem;
 }
 
+.match-page-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-self: start;
+}
+
 .back-link {
   grid-column: 1 / -1;
   font-size: 0.78rem;
@@ -436,6 +443,81 @@ body::before {
   flex-direction: column;
   gap: 1.5rem;
   align-self: start;
+}
+
+.odds-chart-card {
+  background: linear-gradient(160deg, #111118 0%, #151423 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.odds-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.odds-chart-title {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.odds-chart-prices {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.odds-chart-price {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.odds-chart-price.yes {
+  color: var(--green);
+}
+
+.odds-chart-price.no {
+  color: var(--red);
+}
+
+.odds-chart-wrap {
+  height: 160px;
+  background:
+    linear-gradient(to right, transparent 24.5%, var(--border) 25%, transparent 25.5%, transparent 49.5%, var(--border) 50%, transparent 50.5%, transparent 74.5%, var(--border) 75%, transparent 75.5%),
+    linear-gradient(to top, transparent 24.5%, var(--border) 25%, transparent 25.5%, transparent 49.5%, var(--border) 50%, transparent 50.5%, transparent 74.5%, var(--border) 75%, transparent 75.5%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.odds-chart-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.odds-chart-line {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 1.8;
+}
+
+.odds-chart-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .match-page-league {
