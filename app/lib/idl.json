@@ -9,94 +9,205 @@
   "instructions": [
     {
       "name": "buy_shares",
-      "discriminator": [40, 239, 138, 154, 8, 37, 106, 108],
+      "docs": [
+        "Buy shares in a market outcome",
+        "Uses constant-product AMM: x * y = k"
+      ],
+      "discriminator": [
+        40,
+        239,
+        138,
+        154,
+        8,
+        37,
+        106,
+        108
+      ],
       "accounts": [
-        { "name": "market", "writable": true },
+        {
+          "name": "market",
+          "writable": true
+        },
         {
           "name": "position",
           "writable": true,
           "pda": {
             "seeds": [
-              { "kind": "const", "value": [112, 111, 115, 105, 116, 105, 111, 110] },
-              { "kind": "account", "path": "market" },
-              { "kind": "account", "path": "user" }
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
             ]
           }
         },
-        { "name": "vault", "writable": true },
-        { "name": "user_usdc", "writable": true },
-        { "name": "user", "writable": true, "signer": true },
-        { "name": "token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
-        { "name": "system_program", "address": "11111111111111111111111111111111" }
-      ],
-      "args": [
-        { "name": "side", "type": { "defined": { "name": "Side" } } },
-        { "name": "usdc_in", "type": "u64" },
-        { "name": "min_shares_out", "type": "u64" }
-      ]
-    },
-    {
-      "name": "sell_shares",
-      "discriminator": [184, 164, 169, 16, 231, 158, 199, 196],
-      "accounts": [
-        { "name": "market", "writable": true },
         {
-          "name": "position",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              { "kind": "const", "value": [112, 111, 115, 105, 116, 105, 111, 110] },
-              { "kind": "account", "path": "market" },
-              { "kind": "account", "path": "user" }
-            ]
-          }
+          "name": "vault",
+          "writable": true
         },
-        { "name": "vault", "writable": true, "relations": ["market"] },
-        { "name": "user_usdc", "writable": true },
-        { "name": "user", "writable": true, "signer": true },
-        { "name": "token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" }
+        {
+          "name": "user_usdc",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
       ],
       "args": [
-        { "name": "side", "type": { "defined": { "name": "Side" } } },
-        { "name": "shares_in", "type": "u64" },
-        { "name": "min_usdc_out", "type": "u64" }
+        {
+          "name": "side",
+          "type": {
+            "defined": {
+              "name": "Side"
+            }
+          }
+        },
+        {
+          "name": "usdc_in",
+          "type": "u64"
+        },
+        {
+          "name": "min_shares_out",
+          "type": "u64"
+        }
       ]
     },
     {
       "name": "claim_winnings",
-      "discriminator": [161, 215, 24, 59, 14, 236, 242, 221],
+      "docs": [
+        "Claim winnings after market resolves"
+      ],
+      "discriminator": [
+        161,
+        215,
+        24,
+        59,
+        14,
+        236,
+        242,
+        221
+      ],
       "accounts": [
-        { "name": "market" },
+        {
+          "name": "market"
+        },
         {
           "name": "position",
           "writable": true,
           "pda": {
             "seeds": [
-              { "kind": "const", "value": [112, 111, 115, 105, 116, 105, 111, 110] },
-              { "kind": "account", "path": "market" },
-              { "kind": "account", "path": "user" }
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
             ]
           }
         },
-        { "name": "vault", "writable": true, "relations": ["market"] },
-        { "name": "user_usdc", "writable": true },
-        { "name": "treasury", "writable": true },
-        { "name": "user", "signer": true },
-        { "name": "token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" }
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "market"
+          ]
+        },
+        {
+          "name": "user_usdc",
+          "writable": true
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
       ],
       "args": []
     },
     {
       "name": "create_market",
-      "discriminator": [103, 226, 97, 235, 200, 188, 251, 254],
+      "docs": [
+        "Create a new prediction market for a football match"
+      ],
+      "discriminator": [
+        103,
+        226,
+        97,
+        235,
+        200,
+        188,
+        251,
+        254
+      ],
       "accounts": [
         {
           "name": "market",
           "writable": true,
           "pda": {
             "seeds": [
-              { "kind": "const", "value": [109, 97, 114, 107, 101, 116] },
-              { "kind": "arg", "path": "match_id" }
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "match_id"
+              }
             ]
           }
         },
@@ -104,87 +215,477 @@
           "name": "platform",
           "writable": true,
           "pda": {
-            "seeds": [{ "kind": "const", "value": [112, 108, 97, 116, 102, 111, 114, 109] }]
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109
+                ]
+              }
+            ]
           }
         },
-        { "name": "usdc_mint" },
-        { "name": "vault" },
-        { "name": "authority", "writable": true, "signer": true },
-        { "name": "system_program", "address": "11111111111111111111111111111111" }
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "vault"
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
       ],
       "args": [
-        { "name": "match_id", "type": "string" },
-        { "name": "home_team", "type": "string" },
-        { "name": "away_team", "type": "string" },
-        { "name": "title", "type": "string" },
-        { "name": "market_type", "type": { "defined": { "name": "MarketType" } } },
-        { "name": "kickoff_time", "type": "i64" },
-        { "name": "close_time", "type": "i64" }
+        {
+          "name": "match_id",
+          "type": "string"
+        },
+        {
+          "name": "home_team",
+          "type": "string"
+        },
+        {
+          "name": "away_team",
+          "type": "string"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "market_type",
+          "type": {
+            "defined": {
+              "name": "MarketType"
+            }
+          }
+        },
+        {
+          "name": "kickoff_time",
+          "type": "i64"
+        },
+        {
+          "name": "close_time",
+          "type": "i64"
+        }
       ]
     },
     {
       "name": "initialize_platform",
-      "discriminator": [119, 201, 101, 45, 75, 122, 89, 3],
+      "docs": [
+        "Initialize the global platform state (call once at deploy)"
+      ],
+      "discriminator": [
+        119,
+        201,
+        101,
+        45,
+        75,
+        122,
+        89,
+        3
+      ],
       "accounts": [
         {
           "name": "platform",
           "writable": true,
           "pda": {
-            "seeds": [{ "kind": "const", "value": [112, 108, 97, 116, 102, 111, 114, 109] }]
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109
+                ]
+              }
+            ]
           }
         },
-        { "name": "treasury" },
-        { "name": "authority", "writable": true, "signer": true },
-        { "name": "system_program", "address": "11111111111111111111111111111111" }
+        {
+          "name": "treasury"
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
       ],
       "args": []
     },
     {
       "name": "resolve_market",
-      "discriminator": [155, 23, 80, 173, 46, 74, 23, 239],
+      "docs": [
+        "Resolve a market — admin calls this with the real outcome",
+        "In MUP: this is a manual button. Later: oracle-triggered."
+      ],
+      "discriminator": [
+        155,
+        23,
+        80,
+        173,
+        46,
+        74,
+        23,
+        239
+      ],
       "accounts": [
-        { "name": "market", "writable": true },
-        { "name": "authority", "signer": true }
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
       ],
       "args": [
-        { "name": "outcome", "type": { "defined": { "name": "Outcome" } } }
+        {
+          "name": "outcome",
+          "type": {
+            "defined": {
+              "name": "Outcome"
+            }
+          }
+        }
       ]
     },
     {
       "name": "seed_liquidity",
-      "discriminator": [180, 57, 94, 35, 73, 48, 13, 11],
+      "docs": [
+        "Seed initial liquidity into a market (admin only)",
+        "This solves the cold-start problem — platform LPs seed both sides"
+      ],
+      "discriminator": [
+        180,
+        57,
+        94,
+        35,
+        73,
+        48,
+        13,
+        11
+      ],
       "accounts": [
-        { "name": "market", "writable": true },
-        { "name": "vault", "writable": true, "relations": ["market"] },
-        { "name": "seeder_usdc", "writable": true },
-        { "name": "seeder", "signer": true },
-        { "name": "token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" }
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "market"
+          ]
+        },
+        {
+          "name": "seeder_usdc",
+          "writable": true
+        },
+        {
+          "name": "seeder",
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
       ],
       "args": [
-        { "name": "yes_amount", "type": "u64" },
-        { "name": "no_amount", "type": "u64" }
+        {
+          "name": "yes_amount",
+          "type": "u64"
+        },
+        {
+          "name": "no_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "sell_shares",
+      "docs": [
+        "Sell shares back into the AMM (position exit / \"cancel trade\" path)",
+        "Inverse of buy_shares under the same constant-product market maker."
+      ],
+      "discriminator": [
+        184,
+        164,
+        169,
+        16,
+        231,
+        158,
+        199,
+        196
+      ],
+      "accounts": [
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "user_usdc",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "side",
+          "type": {
+            "defined": {
+              "name": "Side"
+            }
+          }
+        },
+        {
+          "name": "shares_in",
+          "type": "u64"
+        },
+        {
+          "name": "min_usdc_out",
+          "type": "u64"
+        }
       ]
     }
   ],
   "accounts": [
-    { "name": "Market", "discriminator": [219, 190, 213, 55, 0, 227, 198, 154] },
-    { "name": "Platform", "discriminator": [77, 92, 204, 58, 187, 98, 91, 12] },
-    { "name": "Position", "discriminator": [170, 188, 143, 228, 122, 64, 247, 208] }
+    {
+      "name": "Market",
+      "discriminator": [
+        219,
+        190,
+        213,
+        55,
+        0,
+        227,
+        198,
+        154
+      ]
+    },
+    {
+      "name": "Platform",
+      "discriminator": [
+        77,
+        92,
+        204,
+        58,
+        187,
+        98,
+        91,
+        12
+      ]
+    },
+    {
+      "name": "Position",
+      "discriminator": [
+        170,
+        188,
+        143,
+        228,
+        122,
+        64,
+        247,
+        208
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "MarketCreated",
+      "discriminator": [
+        88,
+        184,
+        130,
+        231,
+        226,
+        84,
+        6,
+        58
+      ]
+    },
+    {
+      "name": "MarketResolved",
+      "discriminator": [
+        89,
+        67,
+        230,
+        95,
+        143,
+        106,
+        199,
+        202
+      ]
+    },
+    {
+      "name": "SharesBought",
+      "discriminator": [
+        240,
+        98,
+        69,
+        10,
+        253,
+        234,
+        226,
+        65
+      ]
+    },
+    {
+      "name": "SharesSold",
+      "discriminator": [
+        35,
+        231,
+        5,
+        53,
+        228,
+        158,
+        113,
+        251
+      ]
+    },
+    {
+      "name": "WinningsClaimed",
+      "discriminator": [
+        187,
+        184,
+        29,
+        196,
+        54,
+        117,
+        70,
+        150
+      ]
+    }
   ],
   "errors": [
-    { "code": 6000, "name": "MarketNotOpen", "msg": "Market is not open for trading" },
-    { "code": 6001, "name": "MarketClosed", "msg": "Market trading window has closed" },
-    { "code": 6002, "name": "MarketNotResolved", "msg": "Market has not been resolved yet" },
-    { "code": 6003, "name": "InvalidAmount", "msg": "Invalid amount — must be greater than zero" },
-    { "code": 6004, "name": "SlippageExceeded", "msg": "Slippage tolerance exceeded" },
-    { "code": 6005, "name": "MathOverflow", "msg": "Math overflow" },
-    { "code": 6006, "name": "Unauthorized", "msg": "Unauthorized" },
-    { "code": 6007, "name": "AlreadyClaimed", "msg": "Winnings already claimed" },
-    { "code": 6008, "name": "InvalidOutcome", "msg": "Invalid outcome" },
-    { "code": 6009, "name": "StringTooLong", "msg": "String field too long" },
-    { "code": 6010, "name": "InvalidTimes", "msg": "Close time must be after kickoff time" },
-    { "code": 6011, "name": "InsufficientShares", "msg": "Insufficient shares for this action" },
-    { "code": 6012, "name": "InsufficientLiquidity", "msg": "Insufficient market liquidity" }
+    {
+      "code": 6000,
+      "name": "MarketNotOpen",
+      "msg": "Market is not open for trading"
+    },
+    {
+      "code": 6001,
+      "name": "MarketClosed",
+      "msg": "Market trading window has closed"
+    },
+    {
+      "code": 6002,
+      "name": "MarketNotResolved",
+      "msg": "Market has not been resolved yet"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount — must be greater than zero"
+    },
+    {
+      "code": 6004,
+      "name": "SlippageExceeded",
+      "msg": "Slippage tolerance exceeded"
+    },
+    {
+      "code": 6005,
+      "name": "MathOverflow",
+      "msg": "Math overflow"
+    },
+    {
+      "code": 6006,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
+    },
+    {
+      "code": 6007,
+      "name": "AlreadyClaimed",
+      "msg": "Winnings already claimed"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidOutcome",
+      "msg": "Invalid outcome"
+    },
+    {
+      "code": 6009,
+      "name": "StringTooLong",
+      "msg": "String field too long"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidTimes",
+      "msg": "Close time must be after kickoff time"
+    },
+    {
+      "code": 6011,
+      "name": "InsufficientShares",
+      "msg": "Insufficient shares for this action"
+    },
+    {
+      "code": 6012,
+      "name": "InsufficientLiquidity",
+      "msg": "Insufficient market liquidity"
+    }
   ],
   "types": [
     {
@@ -192,24 +693,146 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "match_id", "type": "string" },
-          { "name": "home_team", "type": "string" },
-          { "name": "away_team", "type": "string" },
-          { "name": "title", "type": "string" },
-          { "name": "market_type", "type": { "defined": { "name": "MarketType" } } },
-          { "name": "kickoff_time", "type": "i64" },
-          { "name": "close_time", "type": "i64" },
-          { "name": "status", "type": { "defined": { "name": "MarketStatus" } } },
-          { "name": "outcome", "type": { "defined": { "name": "Outcome" } } },
-          { "name": "authority", "type": "pubkey" },
-          { "name": "usdc_mint", "type": "pubkey" },
-          { "name": "vault", "type": "pubkey" },
-          { "name": "yes_liquidity", "type": "u64" },
-          { "name": "no_liquidity", "type": "u64" },
-          { "name": "yes_shares_issued", "type": "u64" },
-          { "name": "no_shares_issued", "type": "u64" },
-          { "name": "total_volume", "type": "u64" },
-          { "name": "bump", "type": "u8" }
+          {
+            "name": "match_id",
+            "type": "string"
+          },
+          {
+            "name": "home_team",
+            "type": "string"
+          },
+          {
+            "name": "away_team",
+            "type": "string"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "market_type",
+            "type": {
+              "defined": {
+                "name": "MarketType"
+              }
+            }
+          },
+          {
+            "name": "kickoff_time",
+            "type": "i64"
+          },
+          {
+            "name": "close_time",
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "MarketStatus"
+              }
+            }
+          },
+          {
+            "name": "outcome",
+            "type": {
+              "defined": {
+                "name": "Outcome"
+              }
+            }
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "yes_liquidity",
+            "type": "u64"
+          },
+          {
+            "name": "no_liquidity",
+            "type": "u64"
+          },
+          {
+            "name": "yes_shares_issued",
+            "type": "u64"
+          },
+          {
+            "name": "no_shares_issued",
+            "type": "u64"
+          },
+          {
+            "name": "total_volume",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "match_id",
+            "type": "string"
+          },
+          {
+            "name": "home_team",
+            "type": "string"
+          },
+          {
+            "name": "away_team",
+            "type": "string"
+          },
+          {
+            "name": "market_type",
+            "type": {
+              "defined": {
+                "name": "MarketType"
+              }
+            }
+          },
+          {
+            "name": "kickoff_time",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketResolved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "outcome",
+            "type": {
+              "defined": {
+                "name": "Outcome"
+              }
+            }
+          }
         ]
       }
     },
@@ -218,8 +841,18 @@
       "type": {
         "kind": "enum",
         "variants": [
-          { "name": "Open" }, { "name": "Closed" },
-          { "name": "Resolved" }, { "name": "Cancelled" }
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Closed"
+          },
+          {
+            "name": "Resolved"
+          },
+          {
+            "name": "Cancelled"
+          }
         ]
       }
     },
@@ -228,7 +861,15 @@
       "type": {
         "kind": "enum",
         "variants": [
-          { "name": "MatchWinner" }, { "name": "OverUnder" }, { "name": "BothTeamsScore" }
+          {
+            "name": "MatchWinner"
+          },
+          {
+            "name": "OverUnder"
+          },
+          {
+            "name": "BothTeamsScore"
+          }
         ]
       }
     },
@@ -237,8 +878,18 @@
       "type": {
         "kind": "enum",
         "variants": [
-          { "name": "Undecided" }, { "name": "HomeWin" },
-          { "name": "AwayWin" }, { "name": "Draw" }
+          {
+            "name": "Undecided"
+          },
+          {
+            "name": "HomeWin"
+          },
+          {
+            "name": "AwayWin"
+          },
+          {
+            "name": "Draw"
+          }
         ]
       }
     },
@@ -247,11 +898,26 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "authority", "type": "pubkey" },
-          { "name": "treasury", "type": "pubkey" },
-          { "name": "total_markets", "type": "u64" },
-          { "name": "total_volume", "type": "u64" },
-          { "name": "bump", "type": "u8" }
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_markets",
+            "type": "u64"
+          },
+          {
+            "name": "total_volume",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
         ]
       }
     },
@@ -260,13 +926,98 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "user", "type": "pubkey" },
-          { "name": "market", "type": "pubkey" },
-          { "name": "yes_shares", "type": "u64" },
-          { "name": "no_shares", "type": "u64" },
-          { "name": "total_spent", "type": "u64" },
-          { "name": "claimed", "type": "bool" },
-          { "name": "bump", "type": "u8" }
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "yes_shares",
+            "type": "u64"
+          },
+          {
+            "name": "no_shares",
+            "type": "u64"
+          },
+          {
+            "name": "total_spent",
+            "type": "u64"
+          },
+          {
+            "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SharesBought",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "Side"
+              }
+            }
+          },
+          {
+            "name": "usdc_in",
+            "type": "u64"
+          },
+          {
+            "name": "shares_out",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SharesSold",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": {
+              "defined": {
+                "name": "Side"
+              }
+            }
+          },
+          {
+            "name": "shares_in",
+            "type": "u64"
+          },
+          {
+            "name": "usdc_out",
+            "type": "u64"
+          }
         ]
       }
     },
@@ -274,7 +1025,42 @@
       "name": "Side",
       "type": {
         "kind": "enum",
-        "variants": [{ "name": "Yes" }, { "name": "No" }]
+        "variants": [
+          {
+            "name": "Yes"
+          },
+          {
+            "name": "No"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WinningsClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "gross_payout",
+            "type": "u64"
+          },
+          {
+            "name": "fee",
+            "type": "u64"
+          },
+          {
+            "name": "net_payout",
+            "type": "u64"
+          }
+        ]
       }
     }
   ]
