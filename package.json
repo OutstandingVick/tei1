@@ -1,6 +1,8 @@
 {
   "license": "ISC",
   "scripts": {
+    "sync:fixtures": "ts-node scripts/sync-api-football-markets.ts",
+    "sync:fixtures:dry": "ts-node scripts/sync-api-football-markets.ts --dry-run",
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
   },

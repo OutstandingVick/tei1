@@ -7,8 +7,9 @@ import { PublicKey, Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { ClientWalletMultiButton } from "@/components/ClientWalletMultiButton";
-import { Match, MOCK_MATCHES } from "@/lib/matches";
+import { Match } from "@/lib/matches";
 import { useLiveMatches } from "@/lib/liveMarkets";
+import { useMatches } from "@/lib/useMatches";
 import { getMarketPda, getPlatformPda, getPositionPda, USDC_MINT } from "@/lib/program";
 import IDL from "@/lib/idl.json";
 
@@ -35,7 +36,8 @@ function humanizeOutcome(outcomeKey: string) {
 export default function PortfolioPage() {
   const { connection } = useConnection();
   const { connected, publicKey, signTransaction } = useWallet();
-  const matches = useLiveMatches(MOCK_MATCHES);
+  const { matches: baseMatches } = useMatches();
+  const matches = useLiveMatches(baseMatches);
   const [rows, setRows] = useState<PositionRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

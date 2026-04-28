@@ -1,17 +1,28 @@
 "use client";
 
-import { MOCK_MATCHES } from "@/lib/matches";
 import { TradePanel } from "@/components/TradePanel";
 import { OddsChart } from "@/components/OddsChart";
 import { useLiveMatches } from "@/lib/liveMarkets";
+import { useMatches } from "@/lib/useMatches";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { use } from "react";
 
 export default function MatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const matches = useLiveMatches(MOCK_MATCHES);
+  const { matches: baseMatches, loading } = useMatches();
+  const matches = useLiveMatches(baseMatches);
   const match = matches.find((m) => m.id === id);
+  if (!match && loading) {
+    return (
+      <div className="match-page">
+        <Link href="/" className="back-link">← All Markets</Link>
+        <div className="match-page-header">
+          <div className="match-page-league">Loading live fixture...</div>
+        </div>
+      </div>
+    );
+  }
   if (!match) notFound();
 
   const isLive = match.status === "live";

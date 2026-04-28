@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { AnchorProvider, Idl, Program } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { MOCK_MATCHES } from "@/lib/matches";
 import { getMarketPda, getPlatformPda } from "@/lib/program";
+import { useMatches } from "@/lib/useMatches";
 import IDL from "@/lib/idl.json";
 import { ClientWalletMultiButton } from "@/components/ClientWalletMultiButton";
 
@@ -42,6 +42,7 @@ export default function AdminPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [authority, setAuthority] = useState<string | null>(null);
   const [loadingRows, setLoadingRows] = useState<Record<string, boolean>>({});
+  const { matches } = useMatches();
 
   const isAuthorized = useMemo(
     () => Boolean(publicKey && authority && publicKey.toBase58() === authority),
@@ -65,7 +66,7 @@ export default function AdminPage() {
       setAuthority(platform.authority.toBase58());
 
       const rows = await Promise.all(
-        MOCK_MATCHES.map(async (m) => {
+        matches.map(async (m) => {
           const [marketPda] = getMarketPda(m.matchId);
           try {
             const market: any = await (program.account as any).market.fetch(marketPda);
@@ -93,7 +94,7 @@ export default function AdminPage() {
     } catch (e: any) {
       setError(e?.message || "Failed to load admin state.");
     }
-  }, [connection, publicKey]);
+  }, [connection, publicKey, matches]);
 
   useEffect(() => {
     fetchAdminState();

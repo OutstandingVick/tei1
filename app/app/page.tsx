@@ -1,14 +1,19 @@
 "use client";
 
 import { useMemo } from "react";
-import { MOCK_MATCHES } from "@/lib/matches";
 import { MatchCard } from "@/components/MatchCard";
 import { useLiveMatches } from "@/lib/liveMarkets";
+import { useMatches } from "@/lib/useMatches";
 
 export default function Home() {
-  const matches = useLiveMatches(MOCK_MATCHES);
+  const { matches: baseMatches, source } = useMatches();
+  const matches = useLiveMatches(baseMatches);
   const live = useMemo(() => matches.filter((m) => m.status === "live"), [matches]);
   const upcoming = useMemo(() => matches.filter((m) => m.status === "upcoming"), [matches]);
+  const totalVolume = useMemo(
+    () => matches.reduce((sum, match) => sum + match.totalVolume, 0),
+    [matches]
+  );
 
   return (
     <div className="tei-home">
@@ -25,12 +30,12 @@ export default function Home() {
         </p>
         <div className="hero-stats">
           <div className="hero-stat">
-            <span className="hero-stat-val">$86k+</span>
+            <span className="hero-stat-val">${totalVolume.toLocaleString()}</span>
             <span className="hero-stat-label">Volume today</span>
           </div>
           <div className="hero-stat">
-            <span className="hero-stat-val">5</span>
-            <span className="hero-stat-label">Live markets</span>
+            <span className="hero-stat-val">{matches.length}</span>
+            <span className="hero-stat-label">{source === "api-football" ? "Real fixtures" : "Demo markets"}</span>
           </div>
           <div className="hero-stat">
             <span className="hero-stat-val">&lt;1s</span>
