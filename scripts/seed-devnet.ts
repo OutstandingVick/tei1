@@ -203,7 +203,7 @@ const close = now + 30 * 24 * 60 * 60; // close 30 days from now — won't expir
         .rpc();
       console.log(`   ✅ Market created`);
 
-      // Create vault as ATA (market PDA is owner)
+      // Create vault as ATA (market PDA is the owner)
       await createAssociatedTokenAccount(
         connection,
         wallet,
