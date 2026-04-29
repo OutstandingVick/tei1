@@ -416,7 +416,7 @@ tx.feePayer = publicKey;
   const selectedTeam = side === "yes" ? match.homeTeam : match.awayTeam;
   const selectedPrice = side === "yes" ? match.yesPrice : match.noPrice;
 
-  // Potential payout if position wins
+  // This is the potential payout if position wins
   const totalShares = position ? position.yesShares + position.noShares : 0;
   const hasPosition = position && totalShares > 0;
   const avgCost = hasPosition && totalShares > 0
