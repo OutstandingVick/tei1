@@ -23,7 +23,7 @@ import * as path from "path";
 const DEVNET_RPC = "https://api.devnet.solana.com";
 const WALLET_PATH = path.join(os.homedir(), ".config/solana/id.json");
 
-// Your Phantom wallet address
+// This is your Phantom wallet address
 const RECIPIENT = new PublicKey("4CtohmVcGLgpHTZYL68QrVhs3DjX3ESqA44rVrcyPvQT");
 
 // Mock USDC mint created by seed-devnet.ts
