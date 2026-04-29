@@ -12,7 +12,7 @@ export type Match = {
   homeScore?: number;
   awayScore?: number;
   yesPrice: number;      // 0–1 implied probability (home win)
-  noPrice: number;       // away win
+  noPrice: number;       // when away win
   totalVolume: number;   // USDC
   matchId: string;       // on-chain match ID
 };
