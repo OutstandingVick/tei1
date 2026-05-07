@@ -8,6 +8,7 @@ type MatchSource = "api-football" | "mock-fallback";
 type MatchesResponse = {
   matches?: Match[];
   source?: MatchSource;
+  error?: string | null;
 };
 
 export function useMatches(pollMs = 120000) {
@@ -27,6 +28,9 @@ export function useMatches(pollMs = 120000) {
         if (!stopped && nextMatches.length > 0) {
           setMatches(nextMatches);
           setSource("api-football");
+        } else if (!stopped) {
+          setMatches(MOCK_MATCHES);
+          setSource("mock-fallback");
         }
       } catch {
         if (!stopped) {

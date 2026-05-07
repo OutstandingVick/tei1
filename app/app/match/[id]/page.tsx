@@ -91,8 +91,8 @@ export default function MatchPage({ params }: { params: Promise<{ id: string }> 
             />
           </div>
           <div className="match-page-prob-labels">
-            <span>{match.homeTeam} {(match.yesPrice * 100).toFixed(0)}%</span>
-            <span>{match.awayTeam} {(match.noPrice * 100).toFixed(0)}%</span>
+            <span>{match.homeTeam} {(match.yesPrice * 100).toFixed(1)}%</span>
+            <span>{match.awayTeam} {(match.noPrice * 100).toFixed(1)}%</span>
           </div>
 
           {/* Market stats */}

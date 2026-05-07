@@ -77,10 +77,10 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
         <div className="odds-labels">
           <span className="odds-yes">
-            Home {(match.yesPrice * 100).toFixed(0)}%
+            Home {(match.yesPrice * 100).toFixed(1)}%
           </span>
           <span className="odds-no">
-            Away {(match.noPrice * 100).toFixed(0)}%
+            Away {(match.noPrice * 100).toFixed(1)}%
           </span>
         </div>
       </div>

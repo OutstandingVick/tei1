@@ -137,8 +137,8 @@ export function OddsChart({
 
   const linePath = useMemo(() => buildLinePath(values), [values]);
   const areaPath = useMemo(() => buildAreaPath(values), [values]);
-  const yesPct = Math.round(safePrice * 100);
-  const noPct = 100 - yesPct;
+  const yesPct = (safePrice * 100).toFixed(1);
+  const noPct = (noPrice * 100).toFixed(1);
 
   return (
     <div className="odds-chart-card">

@@ -42,6 +42,7 @@ type ApiFootballResponse = {
 };
 
 let cached: { expiresAt: number; matches: Match[] } | null = null;
+let cachedFailure: { expiresAt: number; message: string } | null = null;
 
 function requireApiKey() {
   const key = process.env.API_FOOTBALL_KEY;
@@ -141,17 +142,29 @@ export async function getApiFootballMatches() {
   if (cached && cached.expiresAt > Date.now()) {
     return cached.matches;
   }
+  if (cachedFailure && cachedFailure.expiresAt > Date.now()) {
+    return [];
+  }
 
   const apiKey = requireApiKey();
   const leagues = getConfiguredLeagues();
   const daysAhead = getDaysAhead();
   const dates = Array.from({ length: daysAhead }, (_, i) => dateString(i));
 
-  const fixtureGroups = await Promise.all(
-    leagues.flatMap((league) =>
-      dates.map((date) => fetchFixturesForLeagueDate(apiKey, league, date))
-    )
-  );
+  let fixtureGroups: ApiFootballFixture[][];
+  try {
+    fixtureGroups = await Promise.all(
+      leagues.flatMap((league) =>
+        dates.map((date) => fetchFixturesForLeagueDate(apiKey, league, date))
+      )
+    );
+  } catch (error: any) {
+    cachedFailure = {
+      expiresAt: Date.now() + CACHE_MS,
+      message: error?.message || "API-Football request failed.",
+    };
+    return [];
+  }
 
   const matches = fixtureGroups
     .flat()
@@ -163,4 +176,11 @@ export async function getApiFootballMatches() {
     matches,
   };
   return matches;
+}
+
+export function getApiFootballCachedFailure() {
+  if (cachedFailure && cachedFailure.expiresAt > Date.now()) {
+    return cachedFailure.message;
+  }
+  return null;
 }

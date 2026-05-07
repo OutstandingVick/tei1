@@ -18,6 +18,7 @@ import {
   getPlatformPda,
   getPositionPda,
 } from "@/lib/program";
+import { emitMarketRefreshBurst } from "@/lib/liveMarkets";
 import IDL from "@/lib/idl.json";
 
 type Side = "yes" | "no";
@@ -230,6 +231,7 @@ tx.feePayer = publicKey;
       );
 
       setTxSig(sig);
+      emitMarketRefreshBurst(match.matchId);
       setAmount("");
     } catch (e: any) {
       console.error("Trade error:", e);
@@ -317,6 +319,7 @@ tx.feePayer = publicKey;
       );
 
       setClaimSig(sig);
+      emitMarketRefreshBurst(match.matchId);
       fetchPositionAndBalance();
     } catch (e: any) {
       console.error("Claim error:", e);
@@ -395,6 +398,7 @@ tx.feePayer = publicKey;
       );
 
       setTxSig(sig);
+      emitMarketRefreshBurst(match.matchId);
       fetchPositionAndBalance();
     } catch (e: any) {
       console.error("Sell error:", e);
@@ -565,7 +569,7 @@ tx.feePayer = publicKey;
           >
             <span className="side-btn-team">{match.homeTeam}</span>
             <span className="side-btn-prob">
-              {(match.yesPrice * 100).toFixed(0)}%
+              {(match.yesPrice * 100).toFixed(1)}%
             </span>
           </button>
           <button
@@ -574,7 +578,7 @@ tx.feePayer = publicKey;
           >
             <span className="side-btn-team">{match.awayTeam}</span>
             <span className="side-btn-prob">
-              {(match.noPrice * 100).toFixed(0)}%
+              {(match.noPrice * 100).toFixed(1)}%
             </span>
           </button>
         </div>

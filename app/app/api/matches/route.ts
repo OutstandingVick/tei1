@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { getApiFootballMatches } from "@/lib/apiFootball";
+import {
+  getApiFootballCachedFailure,
+  getApiFootballMatches,
+} from "@/lib/apiFootball";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +12,7 @@ export async function GET() {
     return NextResponse.json({
       source: "api-football",
       matches,
+      error: getApiFootballCachedFailure(),
       updatedAt: new Date().toISOString(),
     });
   } catch (error: any) {
@@ -18,7 +22,7 @@ export async function GET() {
         matches: [],
         error: error?.message || "Failed to load football fixtures.",
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

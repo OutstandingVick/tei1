@@ -20,6 +20,18 @@ type MarketAccount = {
   totalVolume: { toNumber: () => number };
 };
 
+const MARKET_REFRESH_EVENT = "tei:market-refresh";
+const DEFAULT_POLL_MS = 30000;
+const RPC_STAGGER_MS = 125;
+const WS_SUBSCRIBE_STAGGER_MS = 350;
+const MAX_WS_SUBSCRIPTIONS = Number(
+  process.env.NEXT_PUBLIC_MAX_MARKET_WS_SUBSCRIPTIONS || 3
+);
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function derivePrices(yesLiquidity: number, noLiquidity: number) {
   const total = yesLiquidity + noLiquidity;
   if (total <= 0) {
@@ -33,19 +45,30 @@ function derivePrices(yesLiquidity: number, noLiquidity: number) {
 
 async function fetchLiveMarketData(connection: ReturnType<typeof useConnection>["connection"], matches: Match[]) {
   const program = getReadOnlyProgram(connection);
-  const rows = await Promise.all(
-    matches.map(async (match) => {
-      const [marketPda] = getMarketPda(match.matchId);
-      try {
-        const market = await (program.account as any).market.fetch(marketPda);
-        return [match.matchId, marketToLiveData(market)] as const;
-      } catch {
-        return [match.matchId, null] as const;
-      }
-    })
-  );
+  const rows: Array<readonly [string, LiveMarketData | null]> = [];
+
+  for (const match of matches) {
+    const [marketPda] = getMarketPda(match.matchId);
+    try {
+      const market = await (program.account as any).market.fetch(marketPda);
+      rows.push([match.matchId, marketToLiveData(market)] as const);
+    } catch {
+      rows.push([match.matchId, null] as const);
+    }
+    await sleep(RPC_STAGGER_MS);
+  }
 
   return Object.fromEntries(rows) as Record<string, LiveMarketData | null>;
+}
+
+async function fetchOneLiveMarketData(
+  connection: ReturnType<typeof useConnection>["connection"],
+  matchId: string
+) {
+  const program = getReadOnlyProgram(connection);
+  const [marketPda] = getMarketPda(matchId);
+  const market = await (program.account as any).market.fetch(marketPda);
+  return marketToLiveData(market);
 }
 
 function getReadOnlyProgram(connection: ReturnType<typeof useConnection>["connection"]) {
@@ -83,7 +106,7 @@ function decodeMarketAccount(
   }
 }
 
-export function useLiveMatches(baseMatches: Match[], pollMs = 15000) {
+export function useLiveMatches(baseMatches: Match[], pollMs = DEFAULT_POLL_MS) {
   const { connection } = useConnection();
   const [liveDataByMatchId, setLiveDataByMatchId] = useState<Record<string, LiveMarketData | null>>({});
 
@@ -103,27 +126,61 @@ export function useLiveMatches(baseMatches: Match[], pollMs = 15000) {
       }
     };
 
+    const refreshOne = async (matchId: string) => {
+      try {
+        const live = await fetchOneLiveMarketData(connection, matchId);
+        if (!stopped) {
+          setLiveDataByMatchId((prev) => ({ ...prev, [matchId]: live }));
+        }
+      } catch {
+        // Polling and WebSocket subscriptions remain as backup refresh paths.
+      }
+    };
+
+    const handleRefreshEvent = (event: Event) => {
+      const detail = (event as CustomEvent<{ matchId?: string }>).detail;
+      if (detail?.matchId) {
+        refreshOne(detail.matchId);
+      } else {
+        run();
+      }
+    };
+
     run();
-    for (const match of baseMatches) {
-      const [marketPda] = getMarketPda(match.matchId);
-      const subId = connection.onAccountChange(
-        marketPda,
-        (accountInfo) => {
-          const live = decodeMarketAccount(program, accountInfo.data);
-          if (!live || stopped) return;
-          setLiveDataByMatchId((prev) => ({
-            ...prev,
-            [match.matchId]: live,
-          }));
-        },
-        "confirmed"
-      );
-      subscriptions.push(subId);
-    }
+    window.addEventListener(MARKET_REFRESH_EVENT, handleRefreshEvent);
+    const subscribe = async () => {
+      const subscriptionMatches = baseMatches.slice(0, Math.max(MAX_WS_SUBSCRIPTIONS, 0));
+      for (const match of subscriptionMatches) {
+        if (stopped) return;
+        await sleep(WS_SUBSCRIBE_STAGGER_MS);
+        if (stopped) return;
+        const [marketPda] = getMarketPda(match.matchId);
+        try {
+          const subId = connection.onAccountChange(
+            marketPda,
+            (accountInfo) => {
+              const live = decodeMarketAccount(program, accountInfo.data);
+              if (!live || stopped) return;
+              setLiveDataByMatchId((prev) => ({
+                ...prev,
+                [match.matchId]: live,
+              }));
+            },
+            "confirmed"
+          );
+          subscriptions.push(subId);
+        } catch {
+          // Polling still keeps the UI fresh if the WebSocket tier is rate-limited.
+        }
+      }
+    };
+
+    subscribe();
 
     const timer = setInterval(run, pollMs);
     return () => {
       stopped = true;
+      window.removeEventListener(MARKET_REFRESH_EVENT, handleRefreshEvent);
       clearInterval(timer);
       subscriptions.forEach((subId) => {
         connection.removeAccountChangeListener(subId).catch(() => undefined);
@@ -145,4 +202,19 @@ export function useLiveMatches(baseMatches: Match[], pollMs = 15000) {
       }),
     [baseMatches, liveDataByMatchId]
   );
+}
+
+export function emitMarketRefresh(matchId: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent(MARKET_REFRESH_EVENT, {
+      detail: { matchId },
+    })
+  );
+}
+
+export function emitMarketRefreshBurst(matchId: string) {
+  emitMarketRefresh(matchId);
+  window.setTimeout(() => emitMarketRefresh(matchId), 1200);
+  window.setTimeout(() => emitMarketRefresh(matchId), 3500);
 }
