@@ -6,6 +6,7 @@ import { PublicKey } from "@solana/web3.js";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { Match } from "@/lib/matches";
 import { getMarketPda } from "@/lib/program";
+import { SOLANA_WS_ENABLED } from "@/lib/solanaRpc";
 import IDL from "@/lib/idl.json";
 
 type LiveMarketData = {
@@ -149,6 +150,7 @@ export function useLiveMatches(baseMatches: Match[], pollMs = DEFAULT_POLL_MS) {
     run();
     window.addEventListener(MARKET_REFRESH_EVENT, handleRefreshEvent);
     const subscribe = async () => {
+      if (!SOLANA_WS_ENABLED) return;
       const subscriptionMatches = baseMatches.slice(0, Math.max(MAX_WS_SUBSCRIPTIONS, 0));
       for (const match of subscriptionMatches) {
         if (stopped) return;

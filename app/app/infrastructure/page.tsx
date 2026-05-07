@@ -2,6 +2,7 @@ import {
   IS_QUICKNODE_RPC,
   SOLANA_NETWORK,
   SOLANA_RPC_PROVIDER,
+  SOLANA_WS_ENABLED,
   SOLANA_WS_ENDPOINT,
 } from "@/lib/solanaRpc";
 
@@ -40,7 +41,7 @@ export default function InfrastructurePage() {
 
         <div className="infra-card">
           <span className="match-stat-label">Live Updates</span>
-          <strong>{SOLANA_WS_ENDPOINT ? "WebSocket enabled" : "Polling fallback"}</strong>
+          <strong>{SOLANA_WS_ENABLED ? "WebSocket enabled" : "Polling fallback"}</strong>
           <p>
             Market accounts subscribe over WebSockets when configured, with
             polling retained as a resilient fallback.

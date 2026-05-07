@@ -11,6 +11,10 @@ export const SOLANA_RPC_ENDPOINT =
 export const SOLANA_WS_ENDPOINT =
   process.env.NEXT_PUBLIC_SOLANA_WS_URL || undefined;
 
+export const SOLANA_WS_ENABLED =
+  process.env.NEXT_PUBLIC_SOLANA_WS_ENABLED !== "false" &&
+  Boolean(SOLANA_WS_ENDPOINT);
+
 export const SOLANA_RPC_PROVIDER =
   process.env.NEXT_PUBLIC_SOLANA_RPC_PROVIDER || "Public RPC";
 

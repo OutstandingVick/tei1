@@ -6,7 +6,11 @@ import {
   WalletProvider,
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { SOLANA_RPC_ENDPOINT, SOLANA_WS_ENDPOINT } from "@/lib/solanaRpc";
+import {
+  SOLANA_RPC_ENDPOINT,
+  SOLANA_WS_ENABLED,
+  SOLANA_WS_ENDPOINT,
+} from "@/lib/solanaRpc";
 
 
 export const AppWalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
@@ -14,7 +18,7 @@ export const AppWalletProvider: FC<{ children: ReactNode }> = ({ children }) => 
   const config = useMemo(
     () => ({
       commitment: "confirmed" as const,
-      wsEndpoint: SOLANA_WS_ENDPOINT,
+      wsEndpoint: SOLANA_WS_ENABLED ? SOLANA_WS_ENDPOINT : undefined,
     }),
     []
   );
