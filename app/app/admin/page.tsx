@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { AnchorProvider, Idl, Program } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { getMarketPda, getPlatformPda } from "@/lib/program";
 import { useMatches } from "@/lib/useMatches";
+import { applyPriorityFee } from "@/lib/priorityFees";
 import IDL from "@/lib/idl.json";
 import { ClientWalletMultiButton } from "@/components/ClientWalletMultiButton";
 
@@ -127,13 +128,29 @@ export default function AdminPage() {
               ? { awayWin: {} }
               : { draw: {} };
 
-        const sig = await (program.methods as any)
+        const resolveIx = await (program.methods as any)
           .resolveMarket(outcomeArg)
           .accounts({
             market: marketPda,
             authority: publicKey,
           })
-          .rpc();
+          .instruction();
+
+        const tx = new Transaction().add(resolveIx);
+        await applyPriorityFee(tx, marketPda);
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+        tx.feePayer = publicKey;
+
+        const signedTx = await signTransaction(tx);
+        const sig = await connection.sendRawTransaction(signedTx.serialize(), {
+          preflightCommitment: "confirmed",
+          maxRetries: 3,
+        });
+        await connection.confirmTransaction(
+          { signature: sig, blockhash, lastValidBlockHeight },
+          "confirmed"
+        );
 
         setSuccess(`Resolved ${matchId} (${humanizeOutcome(outcome)}) · ${sig}`);
         fetchAdminState();

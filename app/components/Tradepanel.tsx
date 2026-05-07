@@ -19,6 +19,7 @@ import {
   getPositionPda,
 } from "@/lib/program";
 import { emitMarketRefreshBurst } from "@/lib/liveMarkets";
+import { applyPriorityFee } from "@/lib/priorityFees";
 import IDL from "@/lib/idl.json";
 
 type Side = "yes" | "no";
@@ -207,6 +208,7 @@ export function TradePanel({ match }: { match: Match }) {
         .instruction();
 
       tx.add(buyIx);
+      await applyPriorityFee(tx, marketPda);
 
       const { blockhash, lastValidBlockHeight } =
   await connection.getLatestBlockhash();
@@ -298,6 +300,7 @@ tx.feePayer = publicKey;
         .instruction();
 
       const tx = new Transaction().add(claimIx);
+      await applyPriorityFee(tx, marketPda);
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
       tx.recentBlockhash = blockhash;
       tx.feePayer = publicKey;
@@ -377,6 +380,7 @@ tx.feePayer = publicKey;
         .instruction();
 
       const tx = new Transaction().add(sellIx);
+      await applyPriorityFee(tx, marketPda);
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
       tx.recentBlockhash = blockhash;
       tx.feePayer = publicKey;

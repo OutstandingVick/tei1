@@ -11,6 +11,7 @@ import { Match } from "@/lib/matches";
 import { useLiveMatches } from "@/lib/liveMarkets";
 import { useMatches } from "@/lib/useMatches";
 import { getMarketPda, getPlatformPda, getPositionPda, USDC_MINT } from "@/lib/program";
+import { applyPriorityFee } from "@/lib/priorityFees";
 import IDL from "@/lib/idl.json";
 
 type PositionRow = {
@@ -145,6 +146,7 @@ export default function PortfolioPage() {
           .instruction();
 
         const tx = new Transaction().add(claimIx);
+        await applyPriorityFee(tx, marketPda);
         const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
         tx.recentBlockhash = blockhash;
         tx.feePayer = publicKey;

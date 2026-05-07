@@ -46,6 +46,15 @@ export default function InfrastructurePage() {
             polling retained as a resilient fallback.
           </p>
         </div>
+
+        <div className="infra-card">
+          <span className="match-stat-label">Transaction Landing</span>
+          <strong>Priority fee aware</strong>
+          <p>
+            Trading transactions estimate compute-unit pricing through
+            Quicknode&apos;s Priority Fee API when the add-on is available.
+          </p>
+        </div>
       </section>
 
       <section className="infra-panel">
@@ -62,6 +71,10 @@ export default function InfrastructurePage() {
           <div>
             <strong>Trading UX</strong>
             <span>Simulation, send, and confirmation flows avoid overloaded public RPC.</span>
+          </div>
+          <div>
+            <strong>Priority fees</strong>
+            <span>Buy, sell, claim, and resolve flows can add Quicknode-recommended compute-unit pricing.</span>
           </div>
           <div>
             <strong>Beta analytics</strong>
