@@ -1398,6 +1398,85 @@ body::before {
   gap: 0.5rem;
 }
 
+/* ─── Infrastructure page ────────────────────────── */
+.infra-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.infra-hero {
+  padding: 3rem 0 1.2rem;
+  max-width: 760px;
+}
+
+.infra-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.9rem;
+}
+
+.infra-card,
+.infra-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at top right, var(--accent-dim), transparent 45%),
+    var(--bg-card);
+  box-shadow: 0 0 0 1px rgba(123, 108, 255, 0.04);
+}
+
+.infra-card {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-height: 160px;
+}
+
+.infra-card strong {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.infra-card p,
+.infra-list span {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+.infra-panel {
+  padding: 1.1rem;
+}
+
+.infra-panel h2 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  margin-bottom: 0.9rem;
+}
+
+.infra-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.7rem;
+}
+
+.infra-list div {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.infra-list strong {
+  color: var(--green);
+  font-size: 0.82rem;
+}
+
 @media (max-width: 900px) {
   .admin-row {
     flex-direction: column;
@@ -1413,6 +1492,11 @@ body::before {
   }
 
   .portfolio-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .infra-grid,
+  .infra-list {
     grid-template-columns: 1fr;
   }
 }

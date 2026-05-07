@@ -35,7 +35,7 @@ import * as path from "path";
 
 // ── Config ────────────────────────────────────────────────
 const PROGRAM_ID = new PublicKey("GFzfEUfDjfC1jBg2ayrMryJFnxkb41FCabrWQimpPotV");
-const DEVNET_RPC = "https://api.devnet.solana.com";
+const DEVNET_RPC = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
 const IDL_PATH = path.join(__dirname, "../target/idl/tei1.json");
 const WALLET_PATH = path.join(os.homedir(), ".config/solana/id.json");
 

@@ -20,7 +20,7 @@ import * as os from "os";
 import * as path from "path";
 
 // ── Config ────────────────────────────────────────────────
-const DEVNET_RPC = "https://api.devnet.solana.com";
+const DEVNET_RPC = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
 const WALLET_PATH = path.join(os.homedir(), ".config/solana/id.json");
 
 // This is your Phantom wallet address

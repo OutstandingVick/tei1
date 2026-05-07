@@ -16,6 +16,7 @@ export function Header() {
         <Link href="/" className="tei-nav-link">Markets</Link>
         <Link href="/portfolio" className="tei-nav-link">Portfolio</Link>
         <Link href="/admin" className="tei-nav-link">Admin</Link>
+        <Link href="/infrastructure" className="tei-nav-link">Infra</Link>
       </nav>
 
       <div className="tei-header-right">

@@ -14,6 +14,12 @@ type LiveMarketData = {
   totalVolume: number;
 };
 
+type MarketAccount = {
+  yesLiquidity: { toNumber: () => number };
+  noLiquidity: { toNumber: () => number };
+  totalVolume: { toNumber: () => number };
+};
+
 function derivePrices(yesLiquidity: number, noLiquidity: number) {
   const total = yesLiquidity + noLiquidity;
   if (total <= 0) {
@@ -26,32 +32,13 @@ function derivePrices(yesLiquidity: number, noLiquidity: number) {
 }
 
 async function fetchLiveMarketData(connection: ReturnType<typeof useConnection>["connection"], matches: Match[]) {
-  const readOnlyWallet = {
-    publicKey: new PublicKey("11111111111111111111111111111111"),
-    signTransaction: async (tx: unknown) => tx,
-    signAllTransactions: async (txs: unknown[]) => txs,
-  };
-  const provider = new AnchorProvider(connection, readOnlyWallet as any, {
-    commitment: "confirmed",
-  });
-  const program = new Program(IDL as Idl, provider);
-
+  const program = getReadOnlyProgram(connection);
   const rows = await Promise.all(
     matches.map(async (match) => {
       const [marketPda] = getMarketPda(match.matchId);
       try {
-        const market: any = await (program.account as any).market.fetch(marketPda);
-        const yesLiquidity = market.yesLiquidity.toNumber() / 1_000_000;
-        const noLiquidity = market.noLiquidity.toNumber() / 1_000_000;
-        const { yesPrice, noPrice } = derivePrices(yesLiquidity, noLiquidity);
-        return [
-          match.matchId,
-          {
-            yesPrice,
-            noPrice,
-            totalVolume: market.totalVolume.toNumber() / 1_000_000,
-          } satisfies LiveMarketData,
-        ] as const;
+        const market = await (program.account as any).market.fetch(marketPda);
+        return [match.matchId, marketToLiveData(market)] as const;
       } catch {
         return [match.matchId, null] as const;
       }
@@ -61,12 +48,49 @@ async function fetchLiveMarketData(connection: ReturnType<typeof useConnection>[
   return Object.fromEntries(rows) as Record<string, LiveMarketData | null>;
 }
 
+function getReadOnlyProgram(connection: ReturnType<typeof useConnection>["connection"]) {
+  const readOnlyWallet = {
+    publicKey: new PublicKey("11111111111111111111111111111111"),
+    signTransaction: async (tx: unknown) => tx,
+    signAllTransactions: async (txs: unknown[]) => txs,
+  };
+  const provider = new AnchorProvider(connection, readOnlyWallet as any, {
+    commitment: "confirmed",
+  });
+  return new Program(IDL as Idl, provider);
+}
+
+function marketToLiveData(market: MarketAccount): LiveMarketData {
+  const yesLiquidity = market.yesLiquidity.toNumber() / 1_000_000;
+  const noLiquidity = market.noLiquidity.toNumber() / 1_000_000;
+  const { yesPrice, noPrice } = derivePrices(yesLiquidity, noLiquidity);
+  return {
+    yesPrice,
+    noPrice,
+    totalVolume: market.totalVolume.toNumber() / 1_000_000,
+  };
+}
+
+function decodeMarketAccount(
+  program: Program,
+  data: Buffer
+): LiveMarketData | null {
+  try {
+    const market = program.coder.accounts.decode("market", data) as MarketAccount;
+    return marketToLiveData(market);
+  } catch {
+    return null;
+  }
+}
+
 export function useLiveMatches(baseMatches: Match[], pollMs = 15000) {
   const { connection } = useConnection();
   const [liveDataByMatchId, setLiveDataByMatchId] = useState<Record<string, LiveMarketData | null>>({});
 
   useEffect(() => {
     let stopped = false;
+    const subscriptions: number[] = [];
+    const program = getReadOnlyProgram(connection);
 
     const run = async () => {
       try {
@@ -80,10 +104,30 @@ export function useLiveMatches(baseMatches: Match[], pollMs = 15000) {
     };
 
     run();
+    for (const match of baseMatches) {
+      const [marketPda] = getMarketPda(match.matchId);
+      const subId = connection.onAccountChange(
+        marketPda,
+        (accountInfo) => {
+          const live = decodeMarketAccount(program, accountInfo.data);
+          if (!live || stopped) return;
+          setLiveDataByMatchId((prev) => ({
+            ...prev,
+            [match.matchId]: live,
+          }));
+        },
+        "confirmed"
+      );
+      subscriptions.push(subId);
+    }
+
     const timer = setInterval(run, pollMs);
     return () => {
       stopped = true;
       clearInterval(timer);
+      subscriptions.forEach((subId) => {
+        connection.removeAccountChangeListener(subId).catch(() => undefined);
+      });
     };
   }, [connection, baseMatches, pollMs]);
 

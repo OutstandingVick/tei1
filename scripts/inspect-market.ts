@@ -9,7 +9,10 @@ const PROGRAM_ID = new PublicKey("GFzfEUfDjfC1jBg2ayrMryJFnxkb41FCabrWQimpPotV")
 const MATCH_ID = "match_arsenal_chelsea_001";
 
 async function main() {
-  const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+  const connection = new Connection(
+    process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com",
+    "confirmed"
+  );
   const walletPath = path.join(os.homedir(), ".config/solana/id.json");
   const wallet = Keypair.fromSecretKey(
     Uint8Array.from(JSON.parse(fs.readFileSync(walletPath, "utf-8")))
