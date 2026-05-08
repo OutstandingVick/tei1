@@ -29,6 +29,7 @@ import * as path from "path";
 const PROGRAM_ID = new PublicKey("GFzfEUfDjfC1jBg2ayrMryJFnxkb41FCabrWQimpPotV");
 const DEVNET_RPC = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
 const API_FOOTBALL_BASE = "https://v3.football.api-sports.io";
+const API_REQUEST_STAGGER_MS = 900;
 const IDL_PATH = path.join(__dirname, "../target/idl/tei1.json");
 const CONFIG_PATH = path.join(__dirname, "devnet-config.json");
 const WALLET_PATH = path.join(os.homedir(), ".config/solana/id.json");
@@ -104,6 +105,10 @@ function truncate(input: string, max: number) {
   return input.length > max ? input.slice(0, max - 1).trimEnd() : input;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function isTradableFixture(fixture: ApiFixture) {
   return !["FT", "AET", "PEN", "CANC", "PST", "ABD", "AWD", "WO"].includes(
     fixture.fixture.status.short
@@ -123,12 +128,13 @@ async function fetchFixtures() {
     .map((id) => id.trim())
     .filter(Boolean);
   const season = process.env.API_FOOTBALL_SEASON || String(new Date().getUTCFullYear());
-  const daysAhead = Math.min(Number(process.env.API_FOOTBALL_DAYS_AHEAD || 7), 14);
+  const daysAhead = Math.min(Number(process.env.API_FOOTBALL_DAYS_AHEAD || 3), 14);
   const dates = Array.from({ length: daysAhead }, (_, i) => dateString(i));
 
-  const groups = await Promise.all(
-    leagues.flatMap((league) =>
-      dates.map(async (date) => {
+  const groups: ApiFixture[][] = [];
+  for (const league of leagues) {
+    for (const date of dates) {
+      try {
         const params = new URLSearchParams({
           league,
           season,
@@ -145,10 +151,18 @@ async function fetchFixtures() {
         if (body.errors && Object.keys(body.errors as Record<string, unknown>).length > 0) {
           throw new Error(`API-Football errors: ${JSON.stringify(body.errors)}`);
         }
-        return body.response ?? [];
-      })
-    )
-  );
+        groups.push(body.response ?? []);
+      } catch (error: any) {
+        const message = error?.message || "";
+        if (message.includes("rateLimit") || message.includes("Too many requests")) {
+          throw error;
+        }
+        console.warn(`Skipping ${league} on ${date}: ${message}`);
+        groups.push([]);
+      }
+      await sleep(API_REQUEST_STAGGER_MS);
+    }
+  }
 
   return groups
     .flat()

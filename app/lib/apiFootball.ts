@@ -2,8 +2,9 @@ import { Match } from "@/lib/matches";
 
 const API_FOOTBALL_BASE = "https://v3.football.api-sports.io";
 const DEFAULT_LEAGUES = "39,140,135,2";
-const DEFAULT_DAYS_AHEAD = 7;
+const DEFAULT_DAYS_AHEAD = 3;
 const CACHE_MS = 5 * 60 * 1000;
+const REQUEST_STAGGER_MS = 750;
 
 type ApiFootballFixture = {
   fixture: {
@@ -56,6 +57,10 @@ function dateString(offsetDays: number) {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() + offsetDays);
   return d.toISOString().slice(0, 10);
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function getConfiguredLeagues() {
@@ -151,13 +156,22 @@ export async function getApiFootballMatches() {
   const daysAhead = getDaysAhead();
   const dates = Array.from({ length: daysAhead }, (_, i) => dateString(i));
 
-  let fixtureGroups: ApiFootballFixture[][];
+  const fixtureGroups: ApiFootballFixture[][] = [];
   try {
-    fixtureGroups = await Promise.all(
-      leagues.flatMap((league) =>
-        dates.map((date) => fetchFixturesForLeagueDate(apiKey, league, date))
-      )
-    );
+    for (const league of leagues) {
+      for (const date of dates) {
+        try {
+          fixtureGroups.push(await fetchFixturesForLeagueDate(apiKey, league, date));
+        } catch (error: any) {
+          const message = error?.message || "";
+          if (message.includes("rateLimit") || message.includes("Too many requests")) {
+            throw error;
+          }
+          fixtureGroups.push([]);
+        }
+        await sleep(REQUEST_STAGGER_MS);
+      }
+    }
   } catch (error: any) {
     cachedFailure = {
       expiresAt: Date.now() + CACHE_MS,
