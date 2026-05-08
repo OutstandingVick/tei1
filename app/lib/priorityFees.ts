@@ -19,6 +19,10 @@ type QuicknodePriorityFeeResponse = {
 };
 
 const DEFAULT_PRIORITY_FEE_MAX_MICROLAMPORTS = 250_000;
+const PRIORITY_FEE_CACHE_MS = 30_000;
+let cachedPriorityFee:
+  | { expiresAt: number; account: string; microLamports: number | null }
+  | null = null;
 
 function getPriorityFeeCap() {
   const parsed = Number(process.env.NEXT_PUBLIC_PRIORITY_FEE_MAX_MICROLAMPORTS);
@@ -30,6 +34,14 @@ function getPriorityFeeCap() {
 
 export async function estimatePriorityFeeMicroLamports(account: PublicKey = PROGRAM_ID) {
   if (!IS_QUICKNODE_RPC) return null;
+  const accountKey = account.toBase58();
+  if (
+    cachedPriorityFee &&
+    cachedPriorityFee.expiresAt > Date.now() &&
+    cachedPriorityFee.account === accountKey
+  ) {
+    return cachedPriorityFee.microLamports;
+  }
 
   try {
     const res = await fetch(SOLANA_RPC_ENDPOINT, {
@@ -41,7 +53,7 @@ export async function estimatePriorityFeeMicroLamports(account: PublicKey = PROG
         method: "qn_estimatePriorityFees",
         params: {
           last_n_blocks: 100,
-          account: account.toBase58(),
+          account: accountKey,
           api_version: 2,
         },
       }),
@@ -58,8 +70,19 @@ export async function estimatePriorityFeeMicroLamports(account: PublicKey = PROG
       return null;
     }
 
-    return Math.min(Math.ceil(recommended), getPriorityFeeCap());
+    const microLamports = Math.min(Math.ceil(recommended), getPriorityFeeCap());
+    cachedPriorityFee = {
+      expiresAt: Date.now() + PRIORITY_FEE_CACHE_MS,
+      account: accountKey,
+      microLamports,
+    };
+    return microLamports;
   } catch {
+    cachedPriorityFee = {
+      expiresAt: Date.now() + PRIORITY_FEE_CACHE_MS,
+      account: accountKey,
+      microLamports: null,
+    };
     return null;
   }
 }

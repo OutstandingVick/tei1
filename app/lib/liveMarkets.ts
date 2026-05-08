@@ -22,8 +22,8 @@ type MarketAccount = {
 };
 
 const MARKET_REFRESH_EVENT = "tei:market-refresh";
-const DEFAULT_POLL_MS = 30000;
-const RPC_STAGGER_MS = 125;
+const DEFAULT_POLL_MS = 45000;
+const RPC_STAGGER_MS = 250;
 const WS_SUBSCRIBE_STAGGER_MS = 350;
 const MAX_WS_SUBSCRIPTIONS = Number(
   process.env.NEXT_PUBLIC_MAX_MARKET_WS_SUBSCRIPTIONS || 3
@@ -217,6 +217,5 @@ export function emitMarketRefresh(matchId: string) {
 
 export function emitMarketRefreshBurst(matchId: string) {
   emitMarketRefresh(matchId);
-  window.setTimeout(() => emitMarketRefresh(matchId), 1200);
-  window.setTimeout(() => emitMarketRefresh(matchId), 3500);
+  window.setTimeout(() => emitMarketRefresh(matchId), 1800);
 }
