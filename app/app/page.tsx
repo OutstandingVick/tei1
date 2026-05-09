@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { MatchCard } from "@/components/MatchCard";
 import { useLiveMatches } from "@/lib/liveMarkets";
 import { useMatches } from "@/lib/useMatches";
@@ -28,6 +29,11 @@ export default function Home() {
           Peer-to-peer prediction markets for live football.
           No house edge. AMM pricing. Instant settlement.
         </p>
+        <div className="hero-actions">
+          <Link href="/benefit" className="benefit-primary">
+            Claim Founding Trader Pass
+          </Link>
+        </div>
         <div className="hero-stats">
           <div className="hero-stat">
             <span className="hero-stat-val">${totalVolume.toLocaleString()}</span>
