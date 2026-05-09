@@ -22,3 +22,6 @@ export const IS_QUICKNODE_RPC =
   SOLANA_RPC_PROVIDER.toLowerCase().includes("quicknode") ||
   SOLANA_RPC_ENDPOINT.toLowerCase().includes("quiknode") ||
   SOLANA_RPC_ENDPOINT.toLowerCase().includes("quicknode");
+
+export const INFRASTRUCTURE_MODE =
+  process.env.NEXT_PUBLIC_INFRASTRUCTURE_MODE || "Quicknode free-tier conservative mode";

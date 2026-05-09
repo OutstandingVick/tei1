@@ -59,6 +59,36 @@ type DevnetConfig = {
   markets?: Array<{ matchId: string; marketPda: string }>;
 };
 
+const MARKET_TYPES = [
+  {
+    suffix: "",
+    label: "Match Winner",
+    yes: (fixture: ApiFixture) => truncate(fixture.teams.home.name, 32),
+    no: (fixture: ApiFixture) => truncate(fixture.teams.away.name, 32),
+    title: (fixture: ApiFixture) =>
+      truncate(`${fixture.teams.home.name} vs ${fixture.teams.away.name}`, 64),
+    anchorType: { matchWinner: {} },
+  },
+  {
+    suffix: "_yc",
+    label: "Yellow Cards O/U 4.5",
+    yes: () => "Over 4.5 Yellow Cards",
+    no: () => "Under 4.5 Yellow Cards",
+    title: (fixture: ApiFixture) =>
+      truncate(`${fixture.teams.home.name} vs ${fixture.teams.away.name} - Cards O/U 4.5`, 64),
+    anchorType: { overUnder: {} },
+  },
+  {
+    suffix: "_fl",
+    label: "Fouls O/U 21.5",
+    yes: () => "Over 21.5 Fouls",
+    no: () => "Under 21.5 Fouls",
+    title: (fixture: ApiFixture) =>
+      truncate(`${fixture.teams.home.name} vs ${fixture.teams.away.name} - Fouls O/U 21.5`, 64),
+    anchorType: { overUnder: {} },
+  },
+] as const;
+
 function loadEnvFile(filePath: string) {
   if (!fs.existsSync(filePath)) return;
   const lines = fs.readFileSync(filePath, "utf-8").split("\n");
@@ -117,6 +147,10 @@ function isTradableFixture(fixture: ApiFixture) {
 
 function marketIdForFixture(fixtureId: number) {
   return `af_${fixtureId}`;
+}
+
+function marketIdForFixtureMarket(fixtureId: number, suffix: string) {
+  return `${marketIdForFixture(fixtureId)}${suffix}`;
 }
 
 async function fetchFixtures() {
@@ -208,73 +242,75 @@ async function main() {
   const savedMarkets = new Map((config.markets ?? []).map((m) => [m.matchId, m.marketPda]));
 
   for (const fixture of fixtures) {
-    const matchId = marketIdForFixture(fixture.fixture.id);
-    const [marketPda] = getMarketPda(matchId);
-    const home = truncate(fixture.teams.home.name, 32);
-    const away = truncate(fixture.teams.away.name, 32);
-    const title = truncate(`${home} vs ${away}`, 64);
-    const kickoff = fixture.fixture.timestamp;
-    const now = Math.floor(Date.now() / 1000);
-    const close = Math.max(kickoff + 2 * 60 * 60, now + 30 * 60);
+    for (const marketType of MARKET_TYPES) {
+      const matchId = marketIdForFixtureMarket(fixture.fixture.id, marketType.suffix);
+      const [marketPda] = getMarketPda(matchId);
+      const home = marketType.yes(fixture);
+      const away = marketType.no(fixture);
+      const title = marketType.title(fixture);
+      const kickoff = fixture.fixture.timestamp;
+      const now = Math.floor(Date.now() / 1000);
+      const close = Math.max(kickoff + 2 * 60 * 60, now + 30 * 60);
 
-    const existing = await connection.getAccountInfo(marketPda);
-    if (existing) {
-      console.log(`Skip existing: ${matchId} ${title}`);
-      savedMarkets.set(matchId, marketPda.toBase58());
-      continue;
-    }
+      const existing = await connection.getAccountInfo(marketPda);
+      if (existing) {
+        console.log(`Skip existing: ${matchId} ${title}`);
+        savedMarkets.set(matchId, marketPda.toBase58());
+        continue;
+      }
 
-    console.log(`${dryRun ? "Would create" : "Creating"}: ${matchId} ${title}`);
-    console.log(`  League ${fixture.league.name}, kickoff ${fixture.fixture.date}`);
+      console.log(`${dryRun ? "Would create" : "Creating"}: ${matchId} ${title}`);
+      console.log(`  ${marketType.label} · ${fixture.league.name}, kickoff ${fixture.fixture.date}`);
 
-    if (dryRun) continue;
+      if (dryRun) continue;
 
-    const vaultPda = await getAssociatedTokenAddress(usdcMint, marketPda, true);
+      const vaultPda = await getAssociatedTokenAddress(usdcMint, marketPda, true);
 
-    await (program.methods as any)
-      .createMarket(
-        matchId,
-        home,
-        away,
-        title,
-        { matchWinner: {} },
-        new BN(kickoff),
-        new BN(close)
-      )
-      .accounts({
-        market: marketPda,
-        platform: platformPda,
+      await (program.methods as any)
+        .createMarket(
+          matchId,
+          home,
+          away,
+          title,
+          marketType.anchorType,
+          new BN(kickoff),
+          new BN(close)
+        )
+        .accounts({
+          market: marketPda,
+          platform: platformPda,
+          usdcMint,
+          vault: vaultPda,
+          authority: walletPubkey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      await createAssociatedTokenAccount(
+        connection,
+        wallet,
         usdcMint,
-        vault: vaultPda,
-        authority: walletPubkey,
-        systemProgram: SystemProgram.programId,
-      })
-      .rpc();
+        marketPda,
+        undefined,
+        undefined,
+        undefined,
+        true
+      ).catch(() => undefined);
 
-    await createAssociatedTokenAccount(
-      connection,
-      wallet,
-      usdcMint,
-      marketPda,
-      undefined,
-      undefined,
-      undefined,
-      true
-    ).catch(() => undefined);
+      await (program.methods as any)
+        .seedLiquidity(new BN(seedLamports), new BN(seedLamports))
+        .accounts({
+          market: marketPda,
+          vault: vaultPda,
+          seederUsdc: walletUsdcAta,
+          seeder: walletPubkey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
 
-    await (program.methods as any)
-      .seedLiquidity(new BN(seedLamports), new BN(seedLamports))
-      .accounts({
-        market: marketPda,
-        vault: vaultPda,
-        seederUsdc: walletUsdcAta,
-        seeder: walletPubkey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .rpc();
-
-    savedMarkets.set(matchId, marketPda.toBase58());
-    console.log(`  Seeded ${seedUsdc} YES / ${seedUsdc} NO USDC liquidity.`);
+      savedMarkets.set(matchId, marketPda.toBase58());
+      console.log(`  Seeded ${seedUsdc} YES / ${seedUsdc} NO USDC liquidity.`);
+    }
   }
 
   if (!dryRun) {

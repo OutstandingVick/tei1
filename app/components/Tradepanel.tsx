@@ -421,7 +421,7 @@ tx.feePayer = publicKey;
     }
   }, [connected, publicKey, signTransaction, connection, match.matchId, fetchPositionAndBalance]);
 
-  const selectedTeam = side === "yes" ? match.homeTeam : match.awayTeam;
+  const selectedTeam = side === "yes" ? (match.yesLabel ?? match.homeTeam) : (match.noLabel ?? match.awayTeam);
   const selectedPrice = side === "yes" ? match.yesPrice : match.noPrice;
 
   // This is the potential payout if position wins
@@ -454,7 +454,7 @@ tx.feePayer = publicKey;
               <div className="position-row yes">
                 <div className="position-side-label">
                   <span className="position-dot yes-dot" />
-                  {match.homeTeam} (YES)
+                  {match.yesLabel ?? match.homeTeam} (YES)
                 </div>
                 <div className="position-side-actions">
                   <div className="position-shares-val">
@@ -478,7 +478,7 @@ tx.feePayer = publicKey;
               <div className="position-row no">
                 <div className="position-side-label">
                   <span className="position-dot no-dot" />
-                  {match.awayTeam} (NO)
+                  {match.noLabel ?? match.awayTeam} (NO)
                 </div>
                 <div className="position-side-actions">
                   <div className="position-shares-val">
@@ -554,7 +554,7 @@ tx.feePayer = publicKey;
           <h2 className="trade-title">
             {hasPosition ? "Add to Position" : "Trade Outcome"}
           </h2>
-          <span className="trade-market-type">Match Winner</span>
+          <span className="trade-market-type">{match.marketLabel ?? "Match Winner"}</span>
         </div>
 
         {/* Balance */}
@@ -571,7 +571,7 @@ tx.feePayer = publicKey;
             className={`side-btn yes ${side === "yes" ? "active" : ""}`}
             onClick={() => { setSide("yes"); setTxSig(null); setError(null); }}
           >
-            <span className="side-btn-team">{match.homeTeam}</span>
+            <span className="side-btn-team">{match.yesLabel ?? match.homeTeam}</span>
             <span className="side-btn-prob">
               {(match.yesPrice * 100).toFixed(1)}%
             </span>
@@ -580,7 +580,7 @@ tx.feePayer = publicKey;
             className={`side-btn no ${side === "no" ? "active" : ""}`}
             onClick={() => { setSide("no"); setTxSig(null); setError(null); }}
           >
-            <span className="side-btn-team">{match.awayTeam}</span>
+            <span className="side-btn-team">{match.noLabel ?? match.awayTeam}</span>
             <span className="side-btn-prob">
               {(match.noPrice * 100).toFixed(1)}%
             </span>

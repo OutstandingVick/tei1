@@ -425,6 +425,43 @@ body::before {
   align-self: start;
 }
 
+.market-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+}
+
+.market-tab {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  padding: 0.78rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.28rem;
+  transition: all 0.15s;
+}
+
+.market-tab:hover,
+.market-tab.active {
+  border-color: var(--accent-border);
+  background: var(--accent-dim);
+  color: var(--text-primary);
+}
+
+.market-tab span {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.market-tab strong {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+}
+
 .back-link {
   grid-column: 1 / -1;
   font-size: 0.78rem;
@@ -978,6 +1015,10 @@ body::before {
     grid-template-columns: 1fr;
   }
 
+  .market-tabs {
+    grid-template-columns: 1fr;
+  }
+
   .trade-panel {
     position: static;
   }
@@ -1414,6 +1455,30 @@ body::before {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.9rem;
+}
+
+.infra-mode {
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(135deg, var(--accent-dim), transparent 55%),
+    var(--bg-card);
+  padding: 1rem;
+  max-width: 980px;
+}
+
+.infra-mode strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin: 0.35rem 0;
+}
+
+.infra-mode p {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  max-width: 840px;
 }
 
 .infra-card,

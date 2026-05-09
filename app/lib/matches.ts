@@ -1,5 +1,6 @@
 export type Match = {
   id: string;
+  fixtureId?: string;
   homeTeam: string;
   awayTeam: string;
   homeCrest: string;
@@ -15,7 +16,65 @@ export type Match = {
   noPrice: number;       // when away win
   totalVolume: number;   // USDC
   matchId: string;       // on-chain match ID
+  marketKind?: "match_winner" | "yellow_cards" | "fouls";
+  marketLabel?: string;
+  yesLabel?: string;
+  noLabel?: string;
 };
+
+export const LIVE_MARKET_TYPES = [
+  {
+    kind: "match_winner",
+    label: "Match Winner",
+    idSuffix: "",
+    yesLabel: "Home win",
+    noLabel: "Away win",
+  },
+  {
+    kind: "yellow_cards",
+    label: "Yellow Cards O/U 4.5",
+    idSuffix: "_yc",
+    yesLabel: "Over 4.5 cards",
+    noLabel: "Under 4.5 cards",
+  },
+  {
+    kind: "fouls",
+    label: "Fouls O/U 21.5",
+    idSuffix: "_fl",
+    yesLabel: "Over 21.5 fouls",
+    noLabel: "Under 21.5 fouls",
+  },
+] as const;
+
+export type LiveMarketKind = (typeof LIVE_MARKET_TYPES)[number]["kind"];
+
+export function getFixtureId(match: Match) {
+  return match.fixtureId ?? match.id;
+}
+
+export function getFixtureMarketVariants(match: Match): Match[] {
+  const fixtureId = getFixtureId(match);
+  const baseMatchId = match.matchId.replace(/(_yc|_fl)$/, "");
+  return LIVE_MARKET_TYPES.map((marketType) => ({
+    ...match,
+    id: marketType.idSuffix ? `${fixtureId}${marketType.idSuffix}` : fixtureId,
+    fixtureId,
+    matchId: `${baseMatchId}${marketType.idSuffix}`,
+    marketKind: marketType.kind,
+    marketLabel: marketType.label,
+    yesLabel:
+      marketType.kind === "match_winner" ? match.homeTeam : marketType.yesLabel,
+    noLabel:
+      marketType.kind === "match_winner" ? match.awayTeam : marketType.noLabel,
+    yesPrice: marketType.kind === "match_winner" ? match.yesPrice : 0.5,
+    noPrice: marketType.kind === "match_winner" ? match.noPrice : 0.5,
+    totalVolume: marketType.kind === "match_winner" ? match.totalVolume : 0,
+  }));
+}
+
+export function getAllFixtureMarketVariants(matches: Match[]) {
+  return matches.flatMap(getFixtureMarketVariants);
+}
 
 export const MOCK_MATCHES: Match[] = [
   {

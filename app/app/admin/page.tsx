@@ -6,6 +6,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { AnchorProvider, Idl, Program } from "@coral-xyz/anchor";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { getMarketPda, getPlatformPda } from "@/lib/program";
+import { getAllFixtureMarketVariants } from "@/lib/matches";
 import { useMatches } from "@/lib/useMatches";
 import { applyPriorityFee } from "@/lib/priorityFees";
 import IDL from "@/lib/idl.json";
@@ -43,7 +44,11 @@ export default function AdminPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [authority, setAuthority] = useState<string | null>(null);
   const [loadingRows, setLoadingRows] = useState<Record<string, boolean>>({});
-  const { matches } = useMatches();
+  const { matches: baseMatches } = useMatches();
+  const matches = useMemo(
+    () => getAllFixtureMarketVariants(baseMatches),
+    [baseMatches]
+  );
 
   const isAuthorized = useMemo(
     () => Boolean(publicKey && authority && publicKey.toBase58() === authority),

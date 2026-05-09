@@ -20,6 +20,8 @@ type QuicknodePriorityFeeResponse = {
 
 const DEFAULT_PRIORITY_FEE_MAX_MICROLAMPORTS = 250_000;
 const PRIORITY_FEE_CACHE_MS = 30_000;
+export const PRIORITY_FEES_ENABLED =
+  process.env.NEXT_PUBLIC_PRIORITY_FEES_ENABLED !== "false";
 let cachedPriorityFee:
   | { expiresAt: number; account: string; microLamports: number | null }
   | null = null;
@@ -33,6 +35,7 @@ function getPriorityFeeCap() {
 }
 
 export async function estimatePriorityFeeMicroLamports(account: PublicKey = PROGRAM_ID) {
+  if (!PRIORITY_FEES_ENABLED) return null;
   if (!IS_QUICKNODE_RPC) return null;
   const accountKey = account.toBase58();
   if (

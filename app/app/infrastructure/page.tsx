@@ -1,10 +1,12 @@
 import {
   IS_QUICKNODE_RPC,
+  INFRASTRUCTURE_MODE,
   SOLANA_NETWORK,
   SOLANA_RPC_PROVIDER,
   SOLANA_WS_ENABLED,
   SOLANA_WS_ENDPOINT,
 } from "@/lib/solanaRpc";
+import { PRIORITY_FEES_ENABLED } from "@/lib/priorityFees";
 
 export default function InfrastructurePage() {
   return (
@@ -19,6 +21,17 @@ export default function InfrastructurePage() {
           Tei is being prepared for the Eitherway Quicknode track. Quicknode is
           the production RPC and WebSocket layer for low-latency odds, portfolio
           reads, and transaction confirmation.
+        </p>
+      </section>
+
+      <section className="infra-mode">
+        <span className="match-stat-label">Current demo mode</span>
+        <strong>{INFRASTRUCTURE_MODE}</strong>
+        <p>
+          The free-tier demo uses dedicated Quicknode RPC with conservative
+          polling and cached priority-fee estimates to avoid rate limits. The
+          codebase keeps WebSocket subscriptions and priority-fee execution paths
+          ready for higher-throughput production settings.
         </p>
       </section>
 
@@ -50,7 +63,7 @@ export default function InfrastructurePage() {
 
         <div className="infra-card">
           <span className="match-stat-label">Transaction Landing</span>
-          <strong>Priority fee aware</strong>
+          <strong>{PRIORITY_FEES_ENABLED ? "Priority fee aware" : "Standard fees"}</strong>
           <p>
             Trading transactions estimate compute-unit pricing through
             Quicknode&apos;s Priority Fee API when the add-on is available.

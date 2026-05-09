@@ -99,6 +99,7 @@ function normalizeFixture(item: ApiFootballFixture): Match {
 
   return {
     id: `af_${item.fixture.id}`,
+    fixtureId: `af_${item.fixture.id}`,
     matchId: `af_${item.fixture.id}`,
     homeTeam,
     awayTeam,
@@ -114,6 +115,10 @@ function normalizeFixture(item: ApiFootballFixture): Match {
     yesPrice: 0.5,
     noPrice: 0.5,
     totalVolume: 0,
+    marketKind: "match_winner",
+    marketLabel: "Match Winner",
+    yesLabel: homeTeam,
+    noLabel: awayTeam,
   };
 }
 

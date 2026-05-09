@@ -7,7 +7,7 @@ import { PublicKey, Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { ClientWalletMultiButton } from "@/components/ClientWalletMultiButton";
-import { Match } from "@/lib/matches";
+import { getAllFixtureMarketVariants, Match } from "@/lib/matches";
 import { useLiveMatches } from "@/lib/liveMarkets";
 import { useMatches } from "@/lib/useMatches";
 import { getMarketPda, getPlatformPda, getPositionPda, USDC_MINT } from "@/lib/program";
@@ -38,7 +38,11 @@ export default function PortfolioPage() {
   const { connection } = useConnection();
   const { connected, publicKey, signTransaction } = useWallet();
   const { matches: baseMatches } = useMatches();
-  const matches = useLiveMatches(baseMatches);
+  const allMarkets = useMemo(
+    () => getAllFixtureMarketVariants(baseMatches),
+    [baseMatches]
+  );
+  const matches = useLiveMatches(allMarkets);
   const [rows, setRows] = useState<PositionRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -325,7 +329,7 @@ export default function PortfolioPage() {
                         <div className="portfolio-card-title">
                           {row.match.homeTeam} vs {row.match.awayTeam}
                         </div>
-                        <span className="portfolio-chip">{row.match.league}</span>
+                        <span className="portfolio-chip">{row.match.marketLabel ?? row.match.league}</span>
                       </div>
 
                       <div className="portfolio-rows">
