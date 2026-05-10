@@ -633,6 +633,32 @@ pub struct Position {
     pub bump: u8,
 }
 
+#[account]
+pub struct PrivateAuction {
+    pub authority: Pubkey,
+    pub auction_id: String,
+    pub fixture_id: String,
+    pub market_type: MarketType,
+    pub start_time: i64,
+    pub end_time: i64,
+    pub status: AuctionStatus,
+    pub total_commitments: u64,
+    pub revealed_yes_demand: u64,
+    pub revealed_no_demand: u64,
+    pub opening_yes_bps: u64,
+    pub opening_no_bps: u64,
+    pub bump: u8,
+}
+
+#[account]
+pub struct PrivateIntent {
+    pub auction: Pubkey,
+    pub user: Pubkey,
+    pub commitment: [u8; 32],
+    pub created_at: i64,
+    pub bump: u8,
+}
+
 // ─────────────────────────────────────────────
 //  Instruction Contexts
 // ─────────────────────────────────────────────
