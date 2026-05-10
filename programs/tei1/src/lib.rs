@@ -10,6 +10,8 @@ pub const PLATFORM_FEE_BPS: u64 = 200; // 2% fee on winnings
 pub const BPS_DIVISOR: u64 = 10_000;
 pub const MAX_TITLE_LEN: usize = 64;
 pub const MAX_TEAM_LEN: usize = 32;
+pub const MAX_AUCTION_ID_LEN: usize = 32;
+pub const MAX_FIXTURE_ID_LEN: usize = 32;
 
 // ─────────────────────────────────────────────
 //  Program
@@ -115,6 +117,123 @@ pub mod tei1 {
         market.no_liquidity = market.no_liquidity.checked_add(no_amount).ok_or(ForeError::MathOverflow)?;
 
         msg!("Liquidity seeded: {} YES, {} NO", yes_amount, no_amount);
+        Ok(())
+    }
+
+    /// Initialize a sealed pre-market auction for private prediction intent.
+    /// Encrypt pre-alpha integration: users submit sealed commitments before aggregate reveal.
+    pub fn initialize_private_auction(
+        ctx: Context<InitializePrivateAuction>,
+        auction_id: String,
+        fixture_id: String,
+        market_type: MarketType,
+        start_time: i64,
+        end_time: i64,
+    ) -> Result<()> {
+        require!(auction_id.len() <= MAX_AUCTION_ID_LEN, ForeError::StringTooLong);
+        require!(fixture_id.len() <= MAX_FIXTURE_ID_LEN, ForeError::StringTooLong);
+        require!(end_time > start_time, ForeError::InvalidTimes);
+
+        let auction = &mut ctx.accounts.auction;
+        auction.authority = ctx.accounts.authority.key();
+        auction.auction_id = auction_id;
+        auction.fixture_id = fixture_id;
+        auction.market_type = market_type;
+        auction.start_time = start_time;
+        auction.end_time = end_time;
+        auction.status = AuctionStatus::Open;
+        auction.total_commitments = 0;
+        auction.revealed_yes_demand = 0;
+        auction.revealed_no_demand = 0;
+        auction.opening_yes_bps = 5_000;
+        auction.opening_no_bps = 5_000;
+        auction.bump = ctx.bumps.auction;
+
+        emit!(PrivateAuctionInitialized {
+            auction: auction.key(),
+            auction_id: auction.auction_id.clone(),
+            fixture_id: auction.fixture_id.clone(),
+            market_type: auction.market_type.clone(),
+            start_time,
+            end_time,
+        });
+
+        Ok(())
+    }
+
+    /// Submit one sealed intent commitment for an auction.
+    /// The commitment is a 32-byte digest/commitment produced off-chain by the Encrypt prototype client.
+    pub fn submit_private_intent(
+        ctx: Context<SubmitPrivateIntent>,
+        commitment: [u8; 32],
+    ) -> Result<()> {
+        let auction = &mut ctx.accounts.auction;
+        require!(auction.status == AuctionStatus::Open, ForeError::AuctionNotOpen);
+
+        let clock = Clock::get()?;
+        require!(clock.unix_timestamp >= auction.start_time, ForeError::AuctionNotOpen);
+        require!(clock.unix_timestamp < auction.end_time, ForeError::AuctionClosed);
+
+        let intent = &mut ctx.accounts.intent;
+        intent.auction = auction.key();
+        intent.user = ctx.accounts.user.key();
+        intent.commitment = commitment;
+        intent.created_at = clock.unix_timestamp;
+        intent.bump = ctx.bumps.intent;
+
+        auction.total_commitments = auction
+            .total_commitments
+            .checked_add(1)
+            .ok_or(ForeError::MathOverflow)?;
+
+        emit!(PrivateIntentSubmitted {
+            auction: auction.key(),
+            user: ctx.accounts.user.key(),
+            commitment,
+        });
+
+        Ok(())
+    }
+
+    /// Finalize the private auction with aggregate demand after the sealed window closes.
+    /// Individual commitments remain sealed; only aggregate demand is revealed for opening odds.
+    pub fn finalize_private_auction(
+        ctx: Context<FinalizePrivateAuction>,
+        revealed_yes_demand: u64,
+        revealed_no_demand: u64,
+    ) -> Result<()> {
+        let auction = &mut ctx.accounts.auction;
+        require!(auction.status == AuctionStatus::Open, ForeError::AuctionNotOpen);
+        require!(ctx.accounts.authority.key() == auction.authority, ForeError::Unauthorized);
+
+        let total = revealed_yes_demand
+            .checked_add(revealed_no_demand)
+            .ok_or(ForeError::MathOverflow)?;
+        let (yes_bps, no_bps) = if total == 0 {
+            (5_000, 5_000)
+        } else {
+            let yes = revealed_yes_demand
+                .checked_mul(BPS_DIVISOR)
+                .ok_or(ForeError::MathOverflow)?
+                .checked_div(total)
+                .ok_or(ForeError::MathOverflow)?;
+            (yes, BPS_DIVISOR.checked_sub(yes).ok_or(ForeError::MathOverflow)?)
+        };
+
+        auction.status = AuctionStatus::Finalized;
+        auction.revealed_yes_demand = revealed_yes_demand;
+        auction.revealed_no_demand = revealed_no_demand;
+        auction.opening_yes_bps = yes_bps;
+        auction.opening_no_bps = no_bps;
+
+        emit!(PrivateAuctionFinalized {
+            auction: auction.key(),
+            revealed_yes_demand,
+            revealed_no_demand,
+            opening_yes_bps: yes_bps,
+            opening_no_bps: no_bps,
+        });
+
         Ok(())
     }
 
