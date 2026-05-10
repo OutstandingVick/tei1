@@ -30,9 +30,14 @@ export async function createSealedIntent(input: {
     nonce: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
   });
+  const encoded = new TextEncoder().encode(payload);
+  const digestInput = encoded.buffer.slice(
+    encoded.byteOffset,
+    encoded.byteOffset + encoded.byteLength
+  ) as ArrayBuffer;
   const digest = await crypto.subtle.digest(
     "SHA-256",
-    new TextEncoder().encode(payload)
+    digestInput
   );
 
   return {
