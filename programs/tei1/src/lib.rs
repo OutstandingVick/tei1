@@ -738,6 +738,62 @@ pub struct SeedLiquidity<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(auction_id: String, fixture_id: String)]
+pub struct InitializePrivateAuction<'info> {
+    #[account(
+        init,
+        payer = authority,
+        space = 8
+            + 32                 // authority
+            + 4 + MAX_AUCTION_ID_LEN
+            + 4 + MAX_FIXTURE_ID_LEN
+            + 1                  // market_type
+            + 8 + 8              // start/end
+            + 1                  // status
+            + 8                  // total_commitments
+            + 8 + 8              // revealed demand
+            + 8 + 8              // opening odds bps
+            + 1,                 // bump
+        seeds = [b"private_auction", auction_id.as_bytes()],
+        bump
+    )]
+    pub auction: Account<'info, PrivateAuction>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct SubmitPrivateIntent<'info> {
+    #[account(mut)]
+    pub auction: Account<'info, PrivateAuction>,
+
+    #[account(
+        init,
+        payer = user,
+        space = 8 + 32 + 32 + 32 + 8 + 1,
+        seeds = [b"private_intent", auction.key().as_ref(), user.key().as_ref()],
+        bump
+    )]
+    pub intent: Account<'info, PrivateIntent>,
+
+    #[account(mut)]
+    pub user: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct FinalizePrivateAuction<'info> {
+    #[account(mut)]
+    pub auction: Account<'info, PrivateAuction>,
+
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
 pub struct BuyShares<'info> {
     #[account(mut)]
     pub market: Account<'info, Market>,
@@ -833,6 +889,13 @@ pub enum MarketStatus {
     Open,
     Closed,     // trading stopped, awaiting resolution
     Resolved,
+    Cancelled,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Debug)]
+pub enum AuctionStatus {
+    Open,
+    Finalized,
     Cancelled,
 }
 
