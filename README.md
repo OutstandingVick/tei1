@@ -59,6 +59,19 @@ Tei's core product depends on fast Solana reads and live account updates. Quickn
 - scalable data access during beta testing
 - live chart and portfolio refreshes without slow public RPC polling
 
+Secondary privacy prototype: **Encrypt private prediction markets**.
+
+Tei includes a scoped `/private-auction` prototype for the Encrypt/Ika
+sidetrack. The prototype demonstrates a sealed pre-market auction where users
+submit private YES/NO demand before public AMM trading begins. Individual
+direction and size are represented as sealed commitments during the auction
+window; only aggregate demand is revealed to derive opening odds.
+
+Important pre-alpha note: Encrypt's current pre-alpha documentation states that
+the stack is still a developer preview. Tei's integration is therefore framed as
+an architecture prototype for confidential prediction-market intent, not a claim
+of production-grade privacy guarantees.
+
 ## How It Works
 
 1. A football fixture is pulled from API-Football.
