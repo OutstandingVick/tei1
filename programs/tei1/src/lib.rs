@@ -946,6 +946,32 @@ pub struct SharesSold {
 }
 
 #[event]
+pub struct PrivateAuctionInitialized {
+    pub auction: Pubkey,
+    pub auction_id: String,
+    pub fixture_id: String,
+    pub market_type: MarketType,
+    pub start_time: i64,
+    pub end_time: i64,
+}
+
+#[event]
+pub struct PrivateIntentSubmitted {
+    pub auction: Pubkey,
+    pub user: Pubkey,
+    pub commitment: [u8; 32],
+}
+
+#[event]
+pub struct PrivateAuctionFinalized {
+    pub auction: Pubkey,
+    pub revealed_yes_demand: u64,
+    pub revealed_no_demand: u64,
+    pub opening_yes_bps: u64,
+    pub opening_no_bps: u64,
+}
+
+#[event]
 pub struct MarketResolved {
     pub market: Pubkey,
     pub outcome: Outcome,
@@ -992,4 +1018,8 @@ pub enum ForeError {
     InsufficientShares,
     #[msg("Insufficient market liquidity")]
     InsufficientLiquidity,
+    #[msg("Private auction is not open")]
+    AuctionNotOpen,
+    #[msg("Private auction window has closed")]
+    AuctionClosed,
 }

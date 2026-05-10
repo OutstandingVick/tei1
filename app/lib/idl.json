@@ -284,6 +284,43 @@
       ]
     },
     {
+      "name": "finalize_private_auction",
+      "docs": [
+        "Finalize the private auction with aggregate demand after the sealed window closes.",
+        "Individual commitments remain sealed; only aggregate demand is revealed for opening odds."
+      ],
+      "discriminator": [
+        208,
+        174,
+        165,
+        113,
+        42,
+        181,
+        207,
+        229
+      ],
+      "accounts": [
+        {
+          "name": "auction",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "revealed_yes_demand",
+          "type": "u64"
+        },
+        {
+          "name": "revealed_no_demand",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "initialize_platform",
       "docs": [
         "Initialize the global platform state (call once at deploy)"
@@ -334,6 +371,92 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "initialize_private_auction",
+      "docs": [
+        "Initialize a sealed pre-market auction for private prediction intent.",
+        "Encrypt pre-alpha integration: users submit sealed commitments before aggregate reveal."
+      ],
+      "discriminator": [
+        185,
+        229,
+        53,
+        144,
+        53,
+        137,
+        21,
+        203
+      ],
+      "accounts": [
+        {
+          "name": "auction",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  116,
+                  101,
+                  95,
+                  97,
+                  117,
+                  99,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "auction_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "auction_id",
+          "type": "string"
+        },
+        {
+          "name": "fixture_id",
+          "type": "string"
+        },
+        {
+          "name": "market_type",
+          "type": {
+            "defined": {
+              "name": "MarketType"
+            }
+          }
+        },
+        {
+          "name": "start_time",
+          "type": "i64"
+        },
+        {
+          "name": "end_time",
+          "type": "i64"
+        }
+      ]
     },
     {
       "name": "resolve_market",
@@ -510,6 +633,84 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "submit_private_intent",
+      "docs": [
+        "Submit one sealed intent commitment for an auction.",
+        "The commitment is a 32-byte digest/commitment produced off-chain by the Encrypt prototype client."
+      ],
+      "discriminator": [
+        153,
+        24,
+        42,
+        248,
+        112,
+        68,
+        184,
+        164
+      ],
+      "accounts": [
+        {
+          "name": "auction",
+          "writable": true
+        },
+        {
+          "name": "intent",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  116,
+                  101,
+                  95,
+                  105,
+                  110,
+                  116,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "auction"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "commitment",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
     }
   ],
   "accounts": [
@@ -551,6 +752,32 @@
         247,
         208
       ]
+    },
+    {
+      "name": "PrivateAuction",
+      "discriminator": [
+        14,
+        15,
+        6,
+        141,
+        73,
+        90,
+        98,
+        229
+      ]
+    },
+    {
+      "name": "PrivateIntent",
+      "discriminator": [
+        134,
+        202,
+        96,
+        42,
+        118,
+        104,
+        60,
+        134
+      ]
     }
   ],
   "events": [
@@ -578,6 +805,45 @@
         106,
         199,
         202
+      ]
+    },
+    {
+      "name": "PrivateAuctionFinalized",
+      "discriminator": [
+        217,
+        74,
+        187,
+        77,
+        35,
+        166,
+        74,
+        218
+      ]
+    },
+    {
+      "name": "PrivateAuctionInitialized",
+      "discriminator": [
+        133,
+        181,
+        154,
+        228,
+        81,
+        193,
+        30,
+        16
+      ]
+    },
+    {
+      "name": "PrivateIntentSubmitted",
+      "discriminator": [
+        22,
+        122,
+        173,
+        84,
+        77,
+        118,
+        137,
+        53
       ]
     },
     {
@@ -685,9 +951,36 @@
       "code": 6012,
       "name": "InsufficientLiquidity",
       "msg": "Insufficient market liquidity"
+    },
+    {
+      "code": 6013,
+      "name": "AuctionNotOpen",
+      "msg": "Private auction is not open"
+    },
+    {
+      "code": 6014,
+      "name": "AuctionClosed",
+      "msg": "Private auction window has closed"
     }
   ],
   "types": [
+    {
+      "name": "AuctionStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Finalized"
+          },
+          {
+            "name": "Cancelled"
+          }
+        ]
+      }
+    },
     {
       "name": "Market",
       "type": {
@@ -953,6 +1246,196 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrivateAuction",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "auction_id",
+            "type": "string"
+          },
+          {
+            "name": "fixture_id",
+            "type": "string"
+          },
+          {
+            "name": "market_type",
+            "type": {
+              "defined": {
+                "name": "MarketType"
+              }
+            }
+          },
+          {
+            "name": "start_time",
+            "type": "i64"
+          },
+          {
+            "name": "end_time",
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "AuctionStatus"
+              }
+            }
+          },
+          {
+            "name": "total_commitments",
+            "type": "u64"
+          },
+          {
+            "name": "revealed_yes_demand",
+            "type": "u64"
+          },
+          {
+            "name": "revealed_no_demand",
+            "type": "u64"
+          },
+          {
+            "name": "opening_yes_bps",
+            "type": "u64"
+          },
+          {
+            "name": "opening_no_bps",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrivateAuctionFinalized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "auction",
+            "type": "pubkey"
+          },
+          {
+            "name": "revealed_yes_demand",
+            "type": "u64"
+          },
+          {
+            "name": "revealed_no_demand",
+            "type": "u64"
+          },
+          {
+            "name": "opening_yes_bps",
+            "type": "u64"
+          },
+          {
+            "name": "opening_no_bps",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrivateAuctionInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "auction",
+            "type": "pubkey"
+          },
+          {
+            "name": "auction_id",
+            "type": "string"
+          },
+          {
+            "name": "fixture_id",
+            "type": "string"
+          },
+          {
+            "name": "market_type",
+            "type": {
+              "defined": {
+                "name": "MarketType"
+              }
+            }
+          },
+          {
+            "name": "start_time",
+            "type": "i64"
+          },
+          {
+            "name": "end_time",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrivateIntent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "auction",
+            "type": "pubkey"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "commitment",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrivateIntentSubmitted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "auction",
+            "type": "pubkey"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "commitment",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
           }
         ]
       }

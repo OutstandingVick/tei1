@@ -179,6 +179,76 @@ describe("tei1", () => {
     console.log("✅ Liquidity seeded: 1000 USDC each side");
   });
 
+  it("Runs sealed private auction flow", async () => {
+    const auctionId = "test_private_auction_001";
+    const now = Math.floor(Date.now() / 1000);
+    const startTime = now - 60;
+    const endTime = now + 3600;
+
+    const [auctionPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("private_auction"), Buffer.from(auctionId)],
+      program.programId
+    );
+
+    const [intentPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("private_intent"), auctionPda.toBytes(), user.publicKey.toBytes()],
+      program.programId
+    );
+
+    await (program.methods as any)
+      .initializePrivateAuction(
+        auctionId,
+        matchId,
+        { matchWinner: {} },
+        new anchor.BN(startTime),
+        new anchor.BN(endTime)
+      )
+      .accounts({
+        auction: auctionPda,
+        authority: authority.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    const commitment = Array.from(Buffer.alloc(32, 7));
+
+    await (program.methods as any)
+      .submitPrivateIntent(commitment)
+      .accounts({
+        auction: auctionPda,
+        intent: intentPda,
+        user: user.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([user])
+      .rpc();
+
+    const auctionAfterSubmit: any = await (program.account as any).privateAuction.fetch(auctionPda);
+    const intent: any = await (program.account as any).privateIntent.fetch(intentPda);
+
+    assert.equal(auctionAfterSubmit.totalCommitments.toNumber(), 1);
+    assert.deepEqual(intent.commitment, commitment);
+
+    await (program.methods as any)
+      .finalizePrivateAuction(
+        new anchor.BN(150 * 1_000_000),
+        new anchor.BN(50 * 1_000_000)
+      )
+      .accounts({
+        auction: auctionPda,
+        authority: authority.publicKey,
+      })
+      .rpc();
+
+    const auctionAfterFinalize: any = await (program.account as any).privateAuction.fetch(auctionPda);
+
+    assert.deepEqual(auctionAfterFinalize.status, { finalized: {} });
+    assert.equal(auctionAfterFinalize.openingYesBps.toNumber(), 7500);
+    assert.equal(auctionAfterFinalize.openingNoBps.toNumber(), 2500);
+
+    console.log("✅ Private auction finalized: 75% YES / 25% NO opening odds");
+  });
+
   it("User buys YES shares (Arsenal wins)", async () => {
     // Give user USDC first
     const userUsdc = (
