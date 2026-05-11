@@ -29,6 +29,20 @@ export function getPositionPda(marketPubkey: PublicKey, userPubkey: PublicKey) {
   );
 }
 
+export function getPrivateAuctionPda(auctionId: string) {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("private_auction"), Buffer.from(auctionId)],
+    PROGRAM_ID
+  );
+}
+
+export function getPrivateIntentPda(auctionPubkey: PublicKey, userPubkey: PublicKey) {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("private_intent"), auctionPubkey.toBytes(), userPubkey.toBytes()],
+    PROGRAM_ID
+  );
+}
+
 export function getVaultPda(marketPubkey: PublicKey) {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("vault"), marketPubkey.toBytes()],

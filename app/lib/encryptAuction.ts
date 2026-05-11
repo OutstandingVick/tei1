@@ -7,7 +7,9 @@ export type PrivateAuctionIntent = {
   side: PrivateAuctionSide;
   amount: number;
   sealedCommitment: string;
+  commitmentBytes: number[];
   createdAt: string;
+  signature?: string;
 };
 
 export const ENCRYPT_PRE_ALPHA_NOTE =
@@ -40,10 +42,13 @@ export async function createSealedIntent(input: {
     digestInput
   );
 
+  const commitmentHex = toHex(digest);
+
   return {
     id: crypto.randomUUID(),
     ...input,
-    sealedCommitment: `enc-prealpha:${toHex(digest).slice(0, 32)}`,
+    sealedCommitment: `enc-prealpha:${commitmentHex.slice(0, 32)}`,
+    commitmentBytes: [...new Uint8Array(digest)],
     createdAt: new Date().toISOString(),
   } satisfies PrivateAuctionIntent;
 }
@@ -69,7 +74,7 @@ export function deriveOpeningOdds(intents: PrivateAuctionIntent[]) {
   return {
     yesDemand,
     noDemand,
-    yesPrice: noDemand / total,
-    noPrice: yesDemand / total,
+    yesPrice: yesDemand / total,
+    noPrice: noDemand / total,
   };
 }

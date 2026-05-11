@@ -39,6 +39,7 @@ Working today:
 - claim winnings flow
 - API-Football integration path for real fixtures
 - fixture sync script for creating real match markets on-chain
+- on-chain sealed private-auction prototype for confidential pre-trade intent
 
 In progress before final submission:
 
@@ -66,6 +67,14 @@ sidetrack. The prototype demonstrates a sealed pre-market auction where users
 submit private YES/NO demand before public AMM trading begins. Individual
 direction and size are represented as sealed commitments during the auction
 window; only aggregate demand is revealed to derive opening odds.
+
+This is implemented as real Anchor protocol surface, not only frontend copy:
+
+- `PrivateAuction` PDA stores the sealed auction window, market type, commitment count, and finalized opening odds.
+- `PrivateIntent` PDA stores each wallet's 32-byte sealed commitment for one auction.
+- `initialize_private_auction` opens the sealed window.
+- `submit_private_intent` records a wallet's sealed commitment on-chain.
+- `finalize_private_auction` publishes aggregate YES/NO demand and derives opening odds in basis points.
 
 Important pre-alpha note: Encrypt's current pre-alpha documentation states that
 the stack is still a developer preview. Tei's integration is therefore framed as
@@ -98,6 +107,9 @@ For `MatchWinner` markets:
 | `seed_liquidity` | Admin / LP | Seeds AMM liquidity |
 | `buy_shares` | User | Buys YES or NO outcome shares |
 | `sell_shares` | User | Sells open shares back into the AMM |
+| `initialize_private_auction` | Auction authority | Opens a sealed pre-market intent window |
+| `submit_private_intent` | User | Stores a sealed 32-byte private prediction commitment |
+| `finalize_private_auction` | Auction authority | Reveals aggregate demand and sets opening odds |
 | `resolve_market` | Admin | Sets final outcome in the MVP |
 | `claim_winnings` | User | Claims payout after resolution |
 
@@ -158,6 +170,22 @@ PDA: `['position', market_pubkey, user_pubkey]`
 
 Stores a user's YES shares, NO shares, total spent, and claim status for a market.
 
+### PrivateAuction
+
+PDA: `['private_auction', auction_id]`
+
+Stores a sealed pre-market auction window, fixture reference, market type,
+commitment count, aggregate revealed demand, and finalized opening odds.
+
+### PrivateIntent
+
+PDA: `['private_intent', private_auction_pubkey, user_pubkey]`
+
+Stores one sealed 32-byte commitment per wallet per auction. In the current
+Encrypt pre-alpha prototype this is generated from a SHA-256 commitment; the
+protocol boundary is designed so the commitment can be replaced with Encrypt
+REFHE ciphertext once the devnet SDK surface is production-ready.
+
 ### Vault
 
 Associated token account owned by the market PDA.
@@ -175,6 +203,7 @@ Holds USDC escrow for liquidity, trades, and winner payouts.
 - SPL Token mock USDC for devnet beta
 - API-Football for real fixture data
 - Quicknode planned for production RPC/WebSocket infrastructure
+- Encrypt/Ika sidetrack prototype for sealed private intent architecture
 
 ## Setup
 
@@ -256,6 +285,13 @@ cd app
 npx tsc --noEmit --incremental false
 ```
 
+Build the production frontend:
+
+```bash
+cd app
+npm run build
+```
+
 ## Devnet Workflow
 
 Seed demo markets and mock USDC:
@@ -290,6 +326,10 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+Open `http://localhost:3000/private-auction` to test the Encrypt sidetrack
+prototype. Connect a devnet wallet, submit a sealed intent, and finalize the
+aggregate reveal to write the private-auction flow on-chain.
 
 ## Deployment Notes
 
